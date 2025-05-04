@@ -117,3 +117,5 @@ print(f"Is {card1} > {card2}? {card1 > card2}")
 # test = {Card(Rank.ACE, Suit.HEARTS), Card(Rank.KING, Suit.CLUBS)}
 #
 
+new_git_code1 = Card(Rank.NINE, Suit.SPADES)
+print(new_git_code1)
