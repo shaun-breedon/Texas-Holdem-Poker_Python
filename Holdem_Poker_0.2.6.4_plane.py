@@ -2,7 +2,6 @@ from enum import Enum, IntEnum
 from functools import total_ordering
 import random
 
-
 class Suit(Enum):
     SPADES = '♠'
     HEARTS = '♥'
@@ -12,15 +11,13 @@ class Suit(Enum):
     def __str__(self):
         return self.value
 
-
 _face_cards = {
-    10: 'T',
-    11: 'J',
-    12: 'Q',
-    13: 'K',
-    14: 'A'
-}
-
+        10: 'T',
+        11: 'J',
+        12: 'Q',
+        13: 'K',
+        14: 'A'
+    }
 
 class Rank(IntEnum):
     TWO = 2
@@ -40,7 +37,6 @@ class Rank(IntEnum):
     def __str__(self):
         return _face_cards.get(self.value, str(self.value))
 
-
 class HandRank(IntEnum):
     STRAIGHTFLUSH = 9
     QUADS = 8
@@ -48,13 +44,12 @@ class HandRank(IntEnum):
     FLUSH = 6
     STRAIGHT = 5
     TRIPS = 4
-    TWOPAIR = 3
+    TWOPAIR= 3
     PAIR = 2
     HIGHCARD = 1
 
     def __str__(self):
         return self.name
-
 
 @total_ordering
 class Card:
@@ -78,7 +73,6 @@ class Card:
 
     def __hash__(self):
         return hash((self.rank, self.suit))
-
 
 class Deck:
     def __init__(self):
@@ -105,7 +99,6 @@ class Deck:
 
     def __str__(self):
         return ' '.join(str(c) for c in self.cards)
-
 
 class Table:
     wait_list = []
@@ -136,7 +129,7 @@ class Table:
         if not found_seat:
             Table.wait_list.append(player)
 
-    def leave_seat(self, seat_number):
+    def leave_seat(self,seat_number):
         self.seats[seat_number] = None
         if Table.wait_list:
             next_player = Table.wait_list.pop(0)
@@ -146,10 +139,8 @@ class Table:
         return "Table()"
 
     def __str__(self):
-        seated_occupants = ", ".join(
-            f"{seat}: {player.name if player else 'Empty'}" for seat, player in self.seats.items())
+        seated_occupants = ", ".join(f"{seat}: {player.name if player else 'Empty'}" for seat, player in self.seats.items())
         return f"Table {self.table_number}: {seated_occupants}"
-
 
 class Player:
     num_of_players = 0
@@ -211,53 +202,204 @@ class Player:
 
     # make board default to empty
     def get_player_hand(self, board: list[Card] = None):
-        cards = self.hole_cards
         if board:
-            cards.extend(board)
+            cards = self.hole_cards.extend(board)
+        else:
+            cards = self.hole_cards
 
-        cards = sorted(cards, reverse=True)
+        cards = sorted(cards)
 
         # Flushes
 
         # Straights
 
         # Pairs, Two Pairs, Trips, Quads
-        multis = {c: None for c in cards}
-        is_matched = {c: False for c in cards}
-        print(cards)
-        combinations = []
-        for c in cards:
-            if not is_matched[c]:
-                matches = [c == other for other in cards]
-                new = []
-                for i, b in enumerate(matches):
-                    if b:
-                        is_matched[cards[i]] = True
-                multis[c] = sum(matches)
-                combinations.append(sum(matches))
-        print(multis)
-        print(combinations)
-
-        highest = max(combinations)
-        if highest == 4:
-            self.player_hand = HandRank.QUADS
-        elif highest == 3 and 2 in combinations:
-            self.player_hand = HandRank.FULLHOUSE
-        elif highest == 3:
-            self.player_hand = HandRank.TRIPS
-        elif highest == 2 and sum(m == 2 for m in combinations) >= 2:
-            self.player_hand = HandRank.TWOPAIR
-        elif highest == 2:
-            self.player_hand = HandRank.PAIR
-        else:
-            self.player_hand = HandRank.HIGHCARD
-
-        print(self.player_hand)
-
         return cards
 
     def can_act(self) -> bool:
         return not self.folded and not self.all_in and self.seat is not None
+
+    def check(self):
+        action_check = ('CHECK', 0)
+        print(f"{self.position} CHECKS. ({self.name})")
+        return action_check
+
+    # Make sure amount is "to_call"
+    def call(self, amount: int):
+        action_call = ('CALL', self.pip(amount))
+        print(f"{self.position} CALLS {action_call[1]} more for a total of {self.current_bet}. ({self.name})")
+        if self.all_in: print(f"{self.position} is All-In.")
+        return action_call
+
+    # Always first bet of round, ie can never be used preflop and never if another player has already bet
+    # ie self.current_bet must always be 0
+    def bet(self, amount: int, x: float = 1.0):
+        action_bet = ('BET', self.pip(round(x * amount)))
+        if self.all_in:
+            action_all_in = ('ALL-IN', action_bet[1])
+            print(f"{self.position} ALL-IN for {self.current_bet}. ({self.name})")
+            return action_all_in
+        else:
+            print(f"{self.position} BETS {self.current_bet}. ({self.name})")
+            return action_bet
+
+    # amount should be total amount of raise, not "to_call"
+    def raise_holdem(self, amount: int, x: float = 3.0):
+        action_raise = ('RAISE', self.pip(round(x * amount) - self.current_bet))
+        if self.all_in:
+            action_all_in = ('ALL-IN', action_raise[1])
+            print(f"{self.position} ALL-IN for {self.current_bet}. ({self.name})")
+            return action_all_in
+        else:
+            print(f"{self.position} RAISES to {self.current_bet}. ({self.name})")
+            return action_raise
+
+    def go_all_in(self):
+        action_allin = ('ALL-IN', self.pip(self.stack))
+        print(f"{self.position} ALL-IN for {self.current_bet}. ({self.name})")
+        return action_allin
+
+    def fold(self):
+        self.folded = True
+        action_fold = ('FOLD', 0)
+        print(f"{self.position} FOLDS. ({self.name})")
+        return action_fold
+
+    def action_pre_flop(self, pot, highest_bet, to_call, raise_amount, raised_pre, open_action=True):
+
+        if self.strategy == 'passive':
+            if to_call == 0:
+                return self.check()
+            elif raised_pre >= 3:
+                return self.fold()
+            else:
+                return self.call(to_call)
+
+        if self.strategy == 'calling station':
+            if to_call == 0:
+                return self.check()
+            else:
+                return self.call(to_call)
+
+        elif self.strategy == 'aggro':
+            if not open_action:
+                return self.call(to_call)
+            elif to_call == 0:
+                return self.raise_holdem(pot, 2.5)
+            elif (highest_bet + raise_amount - self.current_bet) > self.stack:
+                return self.go_all_in()
+            else:
+                return self.raise_holdem(highest_bet, 5)
+
+        elif self.strategy == 'scared':
+            if to_call == 0:
+                return self.check()
+            elif highest_bet == 3:
+                return self.call(to_call)
+            else:
+                return self.fold()
+
+    def action_flop(self, pot, highest_bet, to_call, raise_amount, raised_pre, raised_flop, open_action=True):
+
+        if self.strategy == 'passive':
+            if to_call == 0:
+                return self.check()
+            elif raised_pre >= 3:
+                return self.fold()
+            else:
+                return self.call(to_call)
+
+        if self.strategy == 'calling station':
+            if to_call == 0:
+                return self.check()
+            else:
+                return self.call(to_call)
+
+        elif self.strategy == 'aggro':
+            if not open_action:
+                return self.call(to_call)
+            elif to_call == 0:
+                return self.raise_holdem(pot, 2.5)
+            elif (highest_bet + raise_amount - self.current_bet) > self.stack:
+                return self.go_all_in()
+            else:
+                return self.raise_holdem(highest_bet, 5)
+
+        elif self.strategy == 'scared':
+            if to_call == 0:
+                return self.check()
+            elif highest_bet == 3:
+                return self.call(to_call)
+            else:
+                return self.fold()
+
+    def action_turn(self, pot, highest_bet, to_call, raise_amount, raised_pre, raised_flop, raised_turn, open_action=True):
+
+        if self.strategy == 'passive':
+            if to_call == 0:
+                return self.check()
+            elif raised_pre >= 3:
+                return self.fold()
+            else:
+                return self.call(to_call)
+
+        if self.strategy == 'calling station':
+            if to_call == 0:
+                return self.check()
+            else:
+                return self.call(to_call)
+
+        elif self.strategy == 'aggro':
+            if not open_action:
+                return self.call(to_call)
+            elif to_call == 0:
+                return self.raise_holdem(pot, 2.5)
+            elif (highest_bet + raise_amount - self.current_bet) > self.stack:
+                return self.go_all_in()
+            else:
+                return self.raise_holdem(highest_bet, 5)
+
+        elif self.strategy == 'scared':
+            if to_call == 0:
+                return self.check()
+            elif highest_bet == 3:
+                return self.call(to_call)
+            else:
+                return self.fold()
+
+    def action_river(self, pot, highest_bet, to_call, raise_amount, raised_pre, raised_flop, raised_turn, raised_river, open_action=True):
+
+        if self.strategy == 'passive':
+            if to_call == 0:
+                return self.check()
+            elif raised_pre >= 3:
+                return self.fold()
+            else:
+                return self.call(to_call)
+
+        if self.strategy == 'calling station':
+            if to_call == 0:
+                return self.check()
+            else:
+                return self.call(to_call)
+
+        elif self.strategy == 'aggro':
+            if not open_action:
+                return self.call(to_call)
+            elif to_call == 0:
+                return self.raise_holdem(pot, 2.5)
+            elif (highest_bet + raise_amount - self.current_bet) > self.stack:
+                return self.go_all_in()
+            else:
+                return self.raise_holdem(highest_bet, 5)
+
+        elif self.strategy == 'scared':
+            if to_call == 0:
+                return self.check()
+            elif highest_bet == 3:
+                return self.call(to_call)
+            else:
+                return self.fold()
 
     def __repr__(self):
         return f"Player('{self.name}', {self.stack}, '{self.strategy}')"
@@ -265,11 +407,9 @@ class Player:
     def __str__(self):
         return f"{self.name}, stack: {self.stack}, {self.strategy}"
 
-
-def seat_players(players: list[tuple[str, int, str]], table: Table) -> None:
+def seat_players(players: list[tuple[str,int,str]], table: Table) -> None:
     for name, stack, strategy in players:
         table.seat_player(Player(name, stack, strategy))
-
 
 class Hand:
     holdemPositions = [
@@ -313,22 +453,18 @@ class Hand:
         self.raise_amt = self.big_blind_amt
         self.n_raises = {'PREFLOP': 1, 'FLOP': 0, 'TURN': 0, 'RIVER': 0} # Keep track of 3bet pot, 4bet pot etc.
         self.mucked_pile = set()
-        #self.preflop()
+        self.preflop()
 
         # Flop
         self.community_board = []
         self.burn_cards = []
-        #self.flop()
+        self.flop()
 
         # Turn
-        #self.turn()
+        self.turn()
 
         # River
-        #self.river()
-
-        self.deal_flop()
-        self.deal_street()
-        self.deal_street()
+        self.river()
 
         Hand.num_of_hands += 1
 
@@ -619,35 +755,128 @@ class Hand:
         return f"Hand {self.hand_number}"
 
 
+
+
+
 player_list = [
-    ('Young White TAG', 500, 'passive')
-    , ('ME', 469, 'passive')
-    , ('Young Asian LAG', 3, 'passive')
-    , ('Young Asian TAG', 200, 'aggro')
-    , ('Old Asian Laggy', 500, 'calling station')
-    , ('Fat Old White Guy', 1000, 'passive')
-    , ('White Pro', 500, 'passive')
-    , ('Indian LAG', 500, 'passive')
-    , ('Villain LAG', 1000, 'aggro')
+    ('Young White TAG',500, 'passive')
+    ,('ME',469, 'passive')
+    ,('Young Asian LAG',3, 'passive')
+    ,('Young Asian TAG',200, 'aggro')
+    ,('Old Asian Laggy',500, 'calling station')
+    ,('Fat Old White Guy',1000, 'passive')
+    ,('White Pro',500, 'passive')
+    ,('Indian LAG',500, 'passive')
+    ,('Villain LAG',1000, 'aggro')
 ]
+
 
 t1 = Table()
 seat_players(player_list, t1)
+
 
 h1 = Hand(t1)
 
 print("\n\n   NEW LINE   \n\n")
 
+# print(f'Hand 1: {h1.__dict__}')
+# h2 = Hand()
+# h3 = Hand()
+# h4 = Hand()
+# h5 = Hand()
+# h6 = Hand()
+# h7 = Hand()
+# h8 = Hand()
+# h9 = Hand()
+
+
 print(Table.__dict__)
 print(Player.__dict__)
 print(Hand.__dict__)
+#print(h1.__dict__)
 print(f'Hand 1: {h1.__dict__}')
+# print(f'Hand 2: {h2.__dict__}')
+# print(f'Hand 3: {h3.__dict__}')
+# print(f'Hand 4: {h4.__dict__}')
+# print(f'Hand 5: {h5.__dict__}')
+# print(f'Hand 6: {h6.__dict__}')
+# print(f'Hand 7: {h7.__dict__}')
+# print(f'Hand 8: {h8.__dict__}')
+# print(f'Hand 9: {h9.__dict__}')
 
-for k,v in h1.positions.items():
-    print(f"{v.hole_cards[0]}{v.hole_cards[1]}",end="")
-    print("  ",end="")
-    for c in v.get_player_hand(h1.community_board):
-        print(c,end="")
-    print("\n")
+# print(h1.players)
+# print(h1.players_in_hand)
+# print(h1.positions)
+#
+# print(h3.players_in_hand)
+# print(h3.players_in_hand[1])
+# print(h3.players_in_hand[1].player)
+# print(h3.players_in_hand[1].starting_stack)
+# print(h3.players_in_hand[1].player.stack)
+#
+#
+#
+#
+# print(h4.players_in_hand[0])
+# print(h4.players_in_hand[0].player)
+# print(h4.players_in_hand[0].starting_stack)
+# print(h4.players_in_hand[0].player.stack)
 
+
+print(h1.players_in_hand)
+print(h1.positions)
+print(h1.players_in_hand[1])
+
+print(h1.players_in_hand[1].stack)
+# print(h1.players_in_hand[4])
+# print(h1.players_in_hand[4].current_bet)
+print(h1.pots)
+
+print(h1.players_in_hand[7].hole_cards)
+
+print(h1.positions['CO'].hole_cards)
+
+for p in h1.pots:
+    print(f"{p}    Eligible players: {p.eligible_players}")
+
+print(h1.n_raises)
+print(h1.community_board)
 h1.show_board()
+
+h1.positions['BU'].show_hole_cards()
+
+print(Card.__dict__)
+
+print(h1.deck)
+
+print(t1)
+
+# print(h3.positionsInt)
+# print(h3.positionsInt[1])
+# print(h3.positionsInt[1].player)
+# print(h3.positionsInt[1].starting_stack)
+# print(h3.positionsInt[1].player.stack)
+
+
+
+# print(h6.positions['BB'].__dict__)
+# print(h6.positions['BB'].holeCards)
+# print(h6.positions)
+
+# print(p0.__dict__)
+# print(p1.__dict__)
+
+# h1.positions['SB'].bet(3)
+# print(p0.__dict__)
+# print(h1.__dict__)
+
+# deck = Deck()
+# deck.shuffle()
+# deck.show()
+# print('\n')
+# p1.draw(deck).draw(deck)
+# p1.show_holeCards()
+#
+# print(p1.pip(35))
+#
+# print(p1.show_stack())
