@@ -69,7 +69,11 @@ class Card:
         return f"{self.rank}{self.suit}"
 
     def __eq__(self, other):
-        return isinstance(other, Card) and self.rank == other.rank
+        return (
+                isinstance(other, Card)
+                and self.rank == other.rank
+                and self.suit == other.suit
+        )
 
     def __lt__(self, other):
         if not isinstance(other, Card):
@@ -96,6 +100,14 @@ class Deck:
             raise ValueError("Not enough cards left to draw.")
         drawn, self.cards = self.cards[-n:], self.cards[:-n]
         return drawn
+
+    def retrieve_card(self, rank: Rank, suit: Suit) -> Card:
+        retrieved_card = next((c for c in self.cards if c.rank is rank and c.suit is suit), None)
+        if retrieved_card:
+            self.cards.remove(retrieved_card)
+            return retrieved_card
+        else:
+            raise ValueError(f"{rank} of {suit} not in deck")
 
     def __len__(self):
         return len(self.cards)
@@ -171,6 +183,7 @@ class Player:
         self.folded = False
         self.all_in = False
         self.player_hand = None
+        self.player_hand_ranking = None
 
     def leave_game(self):
         if self.table is not None and self.seat is not None:
@@ -211,50 +224,333 @@ class Player:
 
     # make board default to empty
     def get_player_hand(self, board: list[Card] = None):
-        cards = self.hole_cards
+        """Return best 5-card hand, and HandRanking, using the two hole cards and the board"""
+        cards = list(self.hole_cards)
         if board:
             cards.extend(board)
 
-        cards = sorted(cards, reverse=True)
+        cards.sort(reverse=True)
+
+        # def _find_straight_flush(_cards: list[Card]) -> list[Card] | None:
+        #     for s in Suit:
+        #         suited_ranks = {c.rank.value for c in _cards if c.suit == s}
+        #         if len(suited_ranks) < 5:
+        #             continue
+        #
+        #         if Rank.ACE.value in suited_ranks:
+        #             suited_ranks.add(1) # Handles wheel straight flush
+        #
+        #         sf_vals = sorted(suited_ranks, reverse=True)
+        #         for v in sf_vals:
+        #             if all((v - offset) in suited_ranks for offset in range(5)): # if straight flush exists
+        #                 straight_flush_vals_w_wheel_handling = [14 if x == 1 else x for x in range(v, v - 5, -1)]
+        #
+        #                 cards_by_rank = {c.rank.value: c for c in _cards if c.suit == s}
+        #                 straight_flush_cards = [cards_by_rank[r] for r in straight_flush_vals_w_wheel_handling]
+        #                 return straight_flush_cards
+        #     return None
+
+        # if sf := _find_straight_flush(cards):
+        #     player_hand_ranking = HandRank.STRAIGHTFLUSH
+        #     player_hand = sf
+
+        # def _find_straight_flush(_cards: list[Card]) -> list[Card] | None:
+        #     by_suit = {
+        #         s: {c.rank.value for c in _cards if c.suit == s}
+        #         for s in Suit
+        #     }
+        #     for k, v in by_suit.items():
+        #         if Rank.ACE.value in v:
+        #             v.add(1)
+        #         by_suit[k] = sorted(v, reverse=True)
+        #     for s in Suit:
+        #         if len(by_suit[s]) < 5:
+        #             continue
+        #         for v in by_suit[s]:
+        #             if all([(v - offset) in by_suit[s] for offset in range(5)]):
+        #                 handle_wheel_straight_flush = [14 if rank_val == 1 else rank_val for rank_val in
+        #                                                range(v, v - 5, -1)]
+        #                 straight_flush_cards = [
+        #                     next(c for c in _cards if c.rank.value == rank_val and c.suit == s)
+        #                     for rank_val in handle_wheel_straight_flush
+        #                 ]
+        #                 return straight_flush_cards
+        #     return None
+
+        # Straight Flush
+        # is_straight_flush = False
+        # straight_flush_cards = []
+        # straight_flush = {
+        #     s: {c.rank.value for c in cards if c.suit == s}
+        #     for s in Suit
+        # }
+        # for k, v in straight_flush.items():
+        #     if Rank.ACE.value in v:
+        #         v.add(1)
+        #     straight_flush[k] = sorted(v, reverse=True)
+        # for s in Suit:
+        #     if len(straight_flush[s]) < 5:
+        #         continue
+        #     for v in straight_flush[s]:
+        #         is_straight_flush = all([(v - offset) in straight_flush[s] for offset in range(5)])
+        #         if is_straight_flush:
+        #             handle_wheel_straight_flush = [14 if rank_val == 1 else rank_val for rank_val in range(v, v - 5, -1)]
+        #             straight_flush_cards = [
+        #                 next(c for c in cards if c.rank.value == rank_val and c.suit == s)
+        #                 for rank_val in handle_wheel_straight_flush
+        #             ]
+        #             break
+        #     if is_straight_flush:
+        #         break
 
         # Flushes
+        # is_flush = False
+        # flush_cards = []
+        # flush = {
+        #     s: sum(1 for c in cards if c.suit == s)
+        #     for s in Suit
+        # }
+        # flush_suit = next((s for s, count in flush.items() if count >= 5), None)
+        # if flush_suit:
+        #     is_flush = True
+        #     flush_cards = [c for c in cards if c.suit == flush_suit]
+        #     flush_cards = flush_cards[:5]
 
         # Straights
+        # straight_cards = []
+        # present_ranks = {c.rank.value for c in cards}
+        # if Rank.ACE.value in present_ranks:
+        #     present_ranks.add(1)
+        # present_ranks = sorted(present_ranks, reverse=True)
+        # is_straight = False
+        # for v in present_ranks:
+        #     is_straight = all([(v - offset) in present_ranks for offset in range(5)])
+        #     if is_straight:
+        #         handle_wheel_straight = [14 if rank_val == 1 else rank_val for rank_val in range(v, v - 5, -1)]
+        #         straight_cards = [
+        #             next(c for c in cards if c.rank.value == rank_val)
+        #             for rank_val in handle_wheel_straight
+        #         ]
+        #         break
+
+        # def _find_full_house_or_trips(_cards: list[Card], _tally_groups: dict[int, list[Rank]]) -> tuple[HandRank, list[Card]] | None:
+        #     if not _tally_groups[3]: # if not trips
+        #         return None
+        #     trips_rank = _tally_groups[3][0]
+        #     trips = [c for c in _cards if c.rank == trips_rank]
+        #     full_of_rank = None
+        #     if _tally_groups[3][1]:
+        #         full_of_rank = _tally_groups[3][1]
+        #     elif _tally_groups[2]:
+        #         full_of_rank = _tally_groups[2][0]
+        #
+        #     if full_of_rank:
+        #         full_of = [c for c in _cards if c.rank == full_of_rank][:2]
+        #         full_house_cards = trips + full_of
+        #         return HandRank.FULLHOUSE, full_house_cards
+        #     else:
+        #         kickers = [c for c in _cards if c.rank != trips_rank][:2]
+        #         trips_cards = trips + kickers
+        #         return HandRank.TRIPS, trips_cards
 
         # Pairs, Two Pairs, Trips, Quads
-        multis = {c: None for c in cards}
-        is_matched = {c: False for c in cards}
-        print(cards)
-        combinations = []
-        for c in cards:
-            if not is_matched[c]:
-                matches = [c == other for other in cards]
-                new = []
-                for i, b in enumerate(matches):
-                    if b:
-                        is_matched[cards[i]] = True
-                multis[c] = sum(matches)
-                combinations.append(sum(matches))
-        print(multis)
-        print(combinations)
+        # rank_counts = {}
+        # for c in cards:
+        #     rank_counts[c.rank] = rank_counts.get(c.rank, 0) + 1
+        # combinations = list(rank_counts.values())
+        # print(rank_counts)
+        # print(combinations)
 
-        highest = max(combinations)
-        if highest == 4:
-            self.player_hand = HandRank.QUADS
-        elif highest == 3 and 2 in combinations:
-            self.player_hand = HandRank.FULLHOUSE
-        elif highest == 3:
-            self.player_hand = HandRank.TRIPS
-        elif highest == 2 and sum(m == 2 for m in combinations) >= 2:
-            self.player_hand = HandRank.TWOPAIR
-        elif highest == 2:
-            self.player_hand = HandRank.PAIR
-        else:
-            self.player_hand = HandRank.HIGHCARD
+        # Quads
+        # quad_cards = []
+        # quad_rank = next((r for r, cnt in rank_counts.items() if cnt == 4), None)
+        # if quad_rank:
+        #     kicker = max(c for c in cards if c.rank != quad_rank)
+        #     quad_cards = [c for c in cards if c.rank == quad_rank] + [kicker]
 
-        print(self.player_hand)
+        # Full House, Trips
+        # full_house_cards = []
+        # trips_cards = []
+        # trips_rank = next((r for r, cnt in rank_counts.items() if cnt == 3), None)
+        # if trips_rank:
+        #     trips = [c for c in cards if c.rank == trips_rank]
+        #     full_of_rank = next(
+        #         (r for r, cnt in rank_counts.items() if (cnt == 3 and r != trips_rank)),
+        #         next((r for r, cnt in rank_counts.items() if cnt == 2), None)
+        #     )
+        #     if full_of_rank:
+        #         full_of = [c for c in cards if c.rank == full_of_rank][:2]
+        #         full_house_cards = trips + full_of
+        #     else:
+        #         kickers = [c for c in cards if c.rank != trips_rank][:2]
+        #         trips_cards = trips + kickers
 
-        return cards
+        # Two Pair, Pair
+        # two_pair_cards = []
+        # pair_cards = []
+        # first_pair_rank = next((r for r, cnt in rank_counts.items() if cnt == 2), None)
+        # if first_pair_rank:
+        #     first_pair = [c for c in cards if c.rank == first_pair_rank]
+        #     second_pair_rank = next(
+        #         (r for r, cnt in rank_counts.items() if (cnt == 2 and r != first_pair_rank)),
+        #         None
+        #     )
+        #     if second_pair_rank:
+        #         second_pair = [c for c in cards if c.rank == second_pair_rank]
+        #         kicker = max(c for c in cards if c.rank not in (first_pair_rank, second_pair_rank))
+        #         two_pair_cards = first_pair + second_pair + [kicker]
+        #     else:
+        #         kickers = [c for c in cards if c.rank != first_pair_rank][:3]
+        #         pair_cards = first_pair + kickers
+
+        # if is_straight_flush:
+        #     player_hand_ranking = HandRank.STRAIGHTFLUSH
+        #     player_hand = straight_flush_cards
+        # elif 4 in combinations:
+        #     player_hand_ranking = HandRank.QUADS
+        #     player_hand = quad_cards
+        # elif (combinations.count(3) == 2) or (3 in combinations and 2 in combinations):
+        #     player_hand_ranking = HandRank.FULLHOUSE
+        #     player_hand = full_house_cards
+        # elif is_flush:
+        #     player_hand_ranking = HandRank.FLUSH
+        #     player_hand = flush_cards
+        # elif is_straight:
+        #     player_hand_ranking = HandRank.STRAIGHT
+        #     player_hand = straight_cards
+        # elif 3 in combinations:
+        #     player_hand_ranking = HandRank.TRIPS
+        #     player_hand = trips_cards
+        # elif combinations.count(2) >= 2:
+        #     player_hand_ranking = HandRank.TWOPAIR
+        #     player_hand = two_pair_cards
+        # elif 2 in combinations:
+        #     player_hand_ranking = HandRank.PAIR
+        #     player_hand = pair_cards
+        # else:
+        #     player_hand_ranking = HandRank.HIGHCARD
+        #     player_hand = cards[:5]
+
+        def _find_flush(_cards: list[Card], return_all_cards: bool = False) -> list[Card] | None:
+            for s in Suit:
+                suited_cards = [c for c in _cards if c.suit == s]
+                if len(suited_cards) >= 5:
+                    flush_cards = suited_cards if return_all_cards else suited_cards[:5]
+                    return flush_cards
+            return None
+
+        def _find_straight(_cards: list[Card]) -> list[Card] | None:
+            ranks = {c.rank.value for c in _cards}
+            if Rank.ACE.value in ranks:
+                ranks.add(1)  # Handles wheel straight
+
+            s_vals = sorted(ranks, reverse=True)
+            for v in s_vals:
+                if all((v - offset) in ranks for offset in range(5)):  # if straight exists
+                    straight_vals_w_wheel_handling = [14 if x == 1 else x for x in range(v, v - 5, -1)]
+
+                    cards_by_rank = {c.rank.value: c for c in _cards}
+                    straight_cards = [cards_by_rank[r] for r in straight_vals_w_wheel_handling]
+                    return straight_cards
+            return None
+
+        def _find_straight_flush(_cards: list[Card]) -> list[Card] | None:
+            if flush_cards := _find_flush(_cards, return_all_cards=True):
+                if straight_flush_cards := _find_straight(flush_cards):
+                    return straight_flush_cards
+            return None
+
+
+        def _tally_rank_groupings(_cards: list[Card]) -> dict[int, list[Rank]]:
+            rank_tally = {}
+            for c in _cards:
+                rank_tally[c.rank] = rank_tally.get(c.rank, 0) + 1
+            tally_groups = {4: [], 3: [], 2: [], 1: []}
+            for r, n in rank_tally.items():
+                tally_groups[n].append(r)
+            for n in tally_groups:
+                tally_groups[n].sort(reverse=True)
+            return tally_groups
+
+        def _find_quads(_cards: list[Card], _tally_groups: dict[int, list[Rank]]) -> list[Card] | None:
+            if not _tally_groups.get(4): # if not quads
+                return None
+            quad_rank = _tally_groups[4][0]
+            kicker = next(c for c in _cards if c.rank != quad_rank)
+            quad_cards = [c for c in _cards if c.rank == quad_rank] + [kicker]
+            return quad_cards
+
+        def _find_full_house(_cards: list[Card], _tally_groups: dict[int, list[Rank]]) -> list[Card] | None:
+            if not _tally_groups.get(3):  # if not trips
+                return None
+
+            if len(_tally_groups.get(3)) > 1:
+                full_of_rank = _tally_groups[3][1]
+            elif _tally_groups.get(2):
+                full_of_rank = _tally_groups[2][0]
+            else:
+                return None
+
+            trips_rank = _tally_groups[3][0]
+            trips = [c for c in _cards if c.rank == trips_rank]
+            full_of = [c for c in _cards if c.rank == full_of_rank][:2]
+            full_house_cards = trips + full_of
+            return full_house_cards
+
+        def _find_trips(_cards: list[Card], _tally_groups: dict[int, list[Rank]]) -> list[Card] | None:
+            if not _tally_groups.get(3): # if not trips
+                return None
+            trips_rank = _tally_groups[3][0]
+            kickers = [c for c in _cards if c.rank != trips_rank][:2]
+            trips_cards = [c for c in _cards if c.rank == trips_rank] + kickers
+            return trips_cards
+
+        def _find_two_pair(_cards: list[Card], _tally_groups: dict[int, list[Rank]]) -> list[Card] | None:
+            if len(_tally_groups.get(2)) < 2:  # if not pair
+                return None
+            first_pair_rank, second_pair_rank = _tally_groups[2][0], _tally_groups[2][1]
+            first_pair, second_pair = ([c for c in _cards if c.rank == first_pair_rank],
+                                       [c for c in _cards if c.rank == second_pair_rank])
+            kicker = next(c for c in _cards if c.rank not in (first_pair_rank, second_pair_rank))
+            two_pair_cards = first_pair + second_pair + [kicker]
+            return two_pair_cards
+
+        def _find_pair(_cards: list[Card], _tally_groups: dict[int, list[Rank]]) -> list[Card] | None:
+            if not _tally_groups.get(2):  # if not pair
+                return None
+            pair_rank = _tally_groups[2][0]
+            kickers = [c for c in _cards if c.rank != pair_rank][:3]
+            pair_cards = [c for c in _cards if c.rank == pair_rank] + kickers
+            return pair_cards
+
+        def _determine_hand(_cards: list[Card], _tally_groups: dict[int, list[Rank]]) -> tuple[list[Card],HandRank]:
+            if sf := _find_straight_flush(_cards):
+                return sf, HandRank.STRAIGHTFLUSH
+            elif q := _find_quads(_cards, _tally_groups):
+                return q, HandRank.QUADS
+            elif fh := _find_full_house(_cards, _tally_groups):
+                return fh, HandRank.FULLHOUSE
+            elif f := _find_flush(_cards):
+                return f, HandRank.FLUSH
+            elif s := _find_straight(_cards):
+                return s, HandRank.STRAIGHT
+            elif t := _find_trips(_cards, _tally_groups):
+                return t, HandRank.TRIPS
+            elif tp := _find_two_pair(_cards, _tally_groups):
+                return tp, HandRank.TWOPAIR
+            elif p := _find_pair(_cards, _tally_groups):
+                return p, HandRank.PAIR
+            else:
+                return _cards[:5], HandRank.HIGHCARD
+
+        tally_groups = _tally_rank_groupings(cards)
+        outcome = _determine_hand(cards,tally_groups)
+        for c in outcome[0]:
+            print(c,end="")
+        print("     ")
+        print(outcome[1])
+
+        return outcome
 
     def can_act(self) -> bool:
         return not self.folded and not self.all_in and self.seat is not None
@@ -305,6 +601,15 @@ class Hand:
         self.post_blinds()
         self.deck = Deck()
         self.deck.shuffle()
+        # test_cards = [
+        #     self.deck.retrieve_card(Rank.TWO, Suit.CLUBS),
+        #     self.deck.retrieve_card(Rank.THREE, Suit.CLUBS),
+        #     self.deck.retrieve_card(Rank.FOUR, Suit.CLUBS),
+        #     self.deck.retrieve_card(Rank.FIVE, Suit.CLUBS),
+        #     # self.deck.retrieve_card(Rank.THREE, Suit.HEARTS),
+        #     # self.deck.retrieve_card(Rank.FOUR, Suit.DIAMONDS),
+        #     # self.deck.retrieve_card(Rank.FIVE, Suit.SPADES)
+        # ]
         self.deal_hole_cards()
 
         # Preflop
@@ -329,6 +634,12 @@ class Hand:
         self.deal_flop()
         self.deal_street()
         self.deal_street()
+
+        # Manual Community Cards Testing
+        # self.community_board.extend(test_cards)
+        # self.deal_street()
+        # self.deal_street()
+        # self.deal_street()
 
         Hand.num_of_hands += 1
 

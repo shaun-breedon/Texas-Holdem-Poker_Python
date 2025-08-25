@@ -202,18 +202,49 @@ class Player:
 
     # make board default to empty
     def get_player_hand(self, board: list[Card] = None):
+        cards = self.hole_cards
         if board:
-            cards = self.hole_cards.extend(board)
-        else:
-            cards = self.hole_cards
+            cards.extend(board)
 
-        cards = sorted(cards)
+        cards = sorted(cards, reverse=True)
 
         # Flushes
 
         # Straights
 
         # Pairs, Two Pairs, Trips, Quads
+        multis = {c: None for c in cards}
+        is_matched = {c: False for c in cards}
+        print(cards)
+        combinations = []
+        for c in cards:
+            if not is_matched[c]:
+                matches = [c == other for other in cards]
+                new = []
+                for i, b in enumerate(matches):
+                    if b:
+                        is_matched[cards[i]] = True
+                multis[c] = sum(matches)
+                combinations.append(sum(matches))
+        print(multis)
+        print(combinations)
+
+        highest = max(combinations)
+        if highest == 4:
+            self.player_hand = HandRank.QUADS
+        elif highest == 3 and 2 in combinations:
+            self.player_hand = HandRank.FULLHOUSE
+        elif highest == 3:
+            self.player_hand = HandRank.TRIPS
+        elif highest == 2 and sum(m == 2 for m in combinations) >= 2:
+            self.player_hand = HandRank.TWOPAIR
+        elif highest == 2:
+            self.player_hand = HandRank.PAIR
+        else:
+            self.player_hand = HandRank.HIGHCARD
+
+        print(self.player_hand)
+
         return cards
 
     def can_act(self) -> bool:
