@@ -2,6 +2,7 @@ from enum import Enum, IntEnum
 from functools import total_ordering
 import random
 
+
 class Suit(Enum):
     SPADES = '♠'
     HEARTS = '♥'
@@ -11,13 +12,15 @@ class Suit(Enum):
     def __str__(self):
         return self.value
 
+
 _face_cards = {
-        10: 'T',
-        11: 'J',
-        12: 'Q',
-        13: 'K',
-        14: 'A'
-    }
+    10: 'T',
+    11: 'J',
+    12: 'Q',
+    13: 'K',
+    14: 'A'
+}
+
 
 class Rank(IntEnum):
     TWO = 2
@@ -37,6 +40,7 @@ class Rank(IntEnum):
     def __str__(self):
         return _face_cards.get(self.value, str(self.value))
 
+
 class HandRank(IntEnum):
     STRAIGHTFLUSH = 9
     QUADS = 8
@@ -44,12 +48,13 @@ class HandRank(IntEnum):
     FLUSH = 6
     STRAIGHT = 5
     TRIPS = 4
-    TWOPAIR= 3
+    TWOPAIR = 3
     PAIR = 2
     HIGHCARD = 1
 
     def __str__(self):
         return self.name
+
 
 @total_ordering
 class Card:
@@ -78,6 +83,7 @@ class Card:
     def __hash__(self):
         return hash((self.rank, self.suit))
 
+
 class Deck:
     def __init__(self):
         self.cards = [Card(r, s) for s in Suit for r in Rank]
@@ -104,6 +110,7 @@ class Deck:
     def __str__(self):
         return ' '.join(str(c) for c in self.cards)
 
+
 class Table:
     wait_list = []
     tables = []
@@ -112,7 +119,7 @@ class Table:
     def num_of_tables(cls) -> int:
         return len(cls.tables)
 
-    def __init__(self, num_of_seats: int=9, small_blind_amt: int=2, big_blind_amt: int=3):
+    def __init__(self, num_of_seats: int = 9, small_blind_amt: int = 2, big_blind_amt: int = 3):
         if num_of_seats < 2:
             raise ValueError("A table must have at least 2 seats.")
         self.num_of_seats: int = num_of_seats
@@ -142,7 +149,7 @@ class Table:
         if not found_seat:
             Table.wait_list.append(player)
 
-    def leave_seat(self, seat_number: int, session_end: bool=False):
+    def leave_seat(self, seat_number: int, session_end: bool = False):
         self.seats[seat_number] = None
         if Table.wait_list and not session_end:
             next_player = Table.wait_list.pop(0)
@@ -165,7 +172,7 @@ class Table:
         else:
             return False
 
-    def post_small_blind(self, pl: 'Player', ante: bool=False, owed: bool=False, in_blinds: bool=True):
+    def post_small_blind(self, pl: 'Player', ante: bool = False, owed: bool = False, in_blinds: bool = True):
         if ante:
             self.pot_ante += pl.pip(self.small_blind_amt, ante=True)
         else:
@@ -173,9 +180,10 @@ class Table:
         if in_blinds:
             pl.paid_sb = True
         pl.owes_sb = False
-        print(f"{pl.name} posts {'owed' if owed else ''} small blind {'ante' if ante else ''} of {self.small_blind_amt}")
+        print(
+            f"{pl.name} posts {'owed' if owed else ''} small blind {'ante' if ante else ''} of {self.small_blind_amt}")
 
-    def post_big_blind(self, pl: 'Player', owed: bool=False, in_blinds: bool=True):
+    def post_big_blind(self, pl: 'Player', owed: bool = False, in_blinds: bool = True):
         pl.pip(self.big_blind_amt)
         if in_blinds:
             pl.paid_bb = True
@@ -230,7 +238,7 @@ class Table:
             pl.paid_bb = False  # reset at dealer
             pl.paid_sb = False  # reset at dealer
 
-        def _missed_big_blind(pl: Player, headsup: bool=False):
+        def _missed_big_blind(pl: Player, headsup: bool = False):
             pl.owes_bb = True
             if headsup and not pl.newly_joined:
                 pl.owes_sb = True
@@ -258,8 +266,8 @@ class Table:
                 else:
                     self.post_small_blind(nxt_deal_pl, ante=True)
                     self.post_big_blind(nxt_deal_pl, owed=True)
-                nxt_deal_pl.paid_sb = False # reset at dealer
-                nxt_deal_pl.paid_bb = False # reset at dealer
+                nxt_deal_pl.paid_sb = False  # reset at dealer
+                nxt_deal_pl.paid_bb = False  # reset at dealer
 
                 # Post Big Blind
                 if nxt_bb_pl.owes_sb and not nxt_bb_pl.newly_joined:
@@ -351,7 +359,7 @@ class Table:
                 return next_dealer, next_small_blind, next_big_blind
             raise RuntimeError("No present players found for the big blind")
 
-        if self.dealer_button is None: # If first hand of the table session
+        if self.dealer_button is None:  # If first hand of the table session
             self.dealer_button, self.small_blind_button, self.big_blind_button = _first_hand()
         else:
             self.dealer_button, self.small_blind_button, self.big_blind_button = _move_buttons()
@@ -360,8 +368,8 @@ class Table:
         non_button_active_players = [
             pl for s, pl in self.seats.items()
             if s not in buttons
-            and self.present(s)
-            and not pl.waiting_for_big_blind
+               and self.present(s)
+               and not pl.waiting_for_big_blind
         ]
 
         for pl in non_button_active_players:
@@ -408,13 +416,15 @@ class Table:
         return "Table()"
 
     def __str__(self):
-        seated_occupants = ", ".join(f"{seat}: {player.name if player else 'Empty'}" for seat, player in self.seats.items())
+        seated_occupants = ", ".join(
+            f"{seat}: {player.name if player else 'Empty'}" for seat, player in self.seats.items())
         return f"Table {self.table_number}: {seated_occupants}"
+
 
 class Player:
     num_of_players = 0
 
-    def __init__(self, name: str, stack: int, strategy: str, waiting_for_big_blind: bool=False):
+    def __init__(self, name: str, stack: int, strategy: str, waiting_for_big_blind: bool = False):
         self.name: str = name
         self.stack: int = stack
         self.strategy: str = strategy
@@ -438,7 +448,7 @@ class Player:
         self.folded: bool = False
         self.all_in: bool = False
 
-    def leave_game(self, session_end: bool=False) -> tuple[str, int, str]:
+    def leave_game(self, session_end: bool = False) -> tuple[str, int, str]:
         if self.position is not None and not self.folded:
             self.fold()
         if self.table is not None and self.seat is not None:
@@ -467,7 +477,7 @@ class Player:
             return
         print(f"{self.name} has {self.stack} chips and not enough to play")
 
-    def pip(self, amount: int, ante: bool=False) -> int:
+    def pip(self, amount: int, ante: bool = False) -> int:
         """Put-money-In-Pot. Takes from stack and handles all-in if necessary"""
         if amount < 0:
             raise ValueError("Amount cannot be negative.")
@@ -500,7 +510,7 @@ class Player:
         if board:
             cards.extend(board)
 
-        cards.sort(reverse=True) # sorts cards high->low. Logic relies on this
+        cards.sort(reverse=True)  # sorts cards high->low. Logic relies on this
 
         def _find_flush(_cards: list[Card], return_all_cards: bool = False) -> list[Card] | None:
             for s in Suit:
@@ -593,7 +603,7 @@ class Player:
             pair_cards = [c for c in _cards if c.rank == pair_rank] + kickers
             return pair_cards
 
-        def _determine_hand(_cards: list[Card], _tally_groups: dict[int, list[Rank]])\
+        def _determine_hand(_cards: list[Card], _tally_groups: dict[int, list[Rank]]) \
                 -> tuple[list[Card], tuple[HandRank, tuple[int, ...]]]:
             """ Since the output of _find_* helpers is passed into _get_ranks, then _get_ranks output is always in the
                         correct group rank order for the hand rank. ie a full-house is [T,T,T,P,P]. Therefore, a tuple of the
@@ -740,7 +750,8 @@ class Player:
             else:
                 return self.fold()
 
-    def action_turn(self, pot, highest_bet, to_call, raise_amount, raised_pre, raised_flop, raised_turn, open_action=True):
+    def action_turn(self, pot, highest_bet, to_call, raise_amount, raised_pre, raised_flop, raised_turn,
+                    open_action=True):
 
         if self.strategy == 'passive':
             if to_call == 0:
@@ -774,7 +785,8 @@ class Player:
             else:
                 return self.fold()
 
-    def action_river(self, pot, highest_bet, to_call, raise_amount, raised_pre, raised_flop, raised_turn, raised_river, open_action=True):
+    def action_river(self, pot, highest_bet, to_call, raise_amount, raised_pre, raised_flop, raised_turn, raised_river,
+                     open_action=True):
 
         if self.strategy == 'passive':
             if to_call == 0:
@@ -814,12 +826,14 @@ class Player:
     def __str__(self):
         return f"{self.name}, stack: {self.stack}, {self.strategy}"
 
-def seat_players(players: list[tuple[str,int,str]], table: Table) -> None:
+
+def seat_players(players: list[tuple[str, int, str]], table: Table) -> None:
     for name, stack, strategy in players:
         if stack > 0:
             table.seat_player(Player(name, stack, strategy))
             continue
         print(f"{name} has {stack} chips and cannot play")
+
 
 class Hand:
     holdemPositions = [
@@ -842,7 +856,7 @@ class Hand:
         self.dealer_button: int
         self.small_blind_button: int
         self.big_blind_button: int
-        self.dealer_button, self.small_blind_button, self.big_blind_button  = self.table.move_buttons_post_blinds()
+        self.dealer_button, self.small_blind_button, self.big_blind_button = self.table.move_buttons_post_blinds()
         self.pots = [self.Pot()]
         self.pots[0].pot += self.table.consolidate_ante()
 
@@ -875,11 +889,12 @@ class Hand:
 
     class Pot:
         num_of_pots = 0
+
         def __init__(self):
             self.pot_number = Hand.Pot.num_of_pots
             self.pot = 0
             self.eligible_players = set()
-            self.capped = False # No more chips can be added
+            self.capped = False  # No more chips can be added
 
             Hand.Pot.num_of_pots += 1
 
@@ -969,7 +984,7 @@ class Hand:
     #                             pl.pip(self.small_blind_amt)
     #                             pl.owes_sb = False
 
-    def _get_seats_between_bu_and_blinds(self, get_bb: bool=False) -> list[int] | tuple[list[int], list[int]]:
+    def _get_seats_between_bu_and_blinds(self, get_bb: bool = False) -> list[int] | tuple[list[int], list[int]]:
         seats = list(self.table.seats.keys())
         bu_i, sb_i = seats.index(self.dealer_button), seats.index(self.small_blind_button)
 
@@ -994,7 +1009,8 @@ class Hand:
         return _between_bu_and_sb_inclusive, _between_sb_and_bb_inclusive
 
     def post_table_entry(self):
-        players_to_post = [pl for pl in self.table.seats.values() if pl is not None and not pl.on_break and (pl.owes_bb or pl.owes_sb)]
+        players_to_post = [pl for pl in self.table.seats.values() if
+                           pl is not None and not pl.on_break and (pl.owes_bb or pl.owes_sb)]
 
         if players_to_post:
             between_bu_and_sb_inclusive = self._get_seats_between_bu_and_blinds()
@@ -1004,7 +1020,8 @@ class Hand:
                     continue
 
                 while True:
-                    answer = input(f"Does {pl.name} with {pl.stack} chips in seat {pl.seat} want to post blinds? (yes/no): ").strip().lower()
+                    answer = input(
+                        f"Does {pl.name} with {pl.stack} chips in seat {pl.seat} want to post blinds? (yes/no): ").strip().lower()
                     if answer in ("yes", "y", "true", "1"):
                         post_blinds = True
                         break
@@ -1031,7 +1048,8 @@ class Hand:
         players_on_break = [pl for pl in self.table.seats.values() if pl is not None and pl.on_break and not pl.owes_bb]
 
         if players_on_break:
-            between_bu_and_sb_inclusive, between_sb_and_bb_inclusive = self._get_seats_between_bu_and_blinds(get_bb=True)
+            between_bu_and_sb_inclusive, between_sb_and_bb_inclusive = self._get_seats_between_bu_and_blinds(
+                get_bb=True)
 
             for pl in players_on_break:
                 if pl.seat in between_sb_and_bb_inclusive:
@@ -1122,7 +1140,7 @@ class Hand:
             start = 0
 
         m = len(players_in_round)
-        p = 0       # incrementor to loop through players. Resets when a raise occurs
+        p = 0  # incrementor to loop through players. Resets when a raise occurs
         live_players = m
         while (p < m) and live_players > 1:
             player_to_act = players_in_round[(p + start) % m]
@@ -1181,17 +1199,17 @@ class Hand:
                     pot.eligible_players.discard(player_to_act)
                 self.mucked_pile.update(player_to_act.hole_cards)
                 player_to_act.hole_cards.clear()
-                #print(f'p:{p} start:{start}  m:{m}  i:{self.players_in_hand.index(player_to_act)}  {player_action} bet:{bet}   highestBet:{self.highest_bet}   playerCurrentBet:{player_to_act.current_bet}    Pot:{self.pots[0]}  allin?:{player_to_act.all_in}   Pos:{player_to_act.position}   {player_to_act}')
+                # print(f'p:{p} start:{start}  m:{m}  i:{self.players_in_hand.index(player_to_act)}  {player_action} bet:{bet}   highestBet:{self.highest_bet}   playerCurrentBet:{player_to_act.current_bet}    Pot:{self.pots[0]}  allin?:{player_to_act.all_in}   Pos:{player_to_act.position}   {player_to_act}')
                 p, live_players = p + 1, live_players - 1
             elif player_action in ('CHECK', 'CALL'):
-                #print(f'p:{p} start:{start}  m:{m}  i:{self.players_in_hand.index(player_to_act)}  {player_action} bet:{bet}   highestBet:{self.highest_bet}   playerCurrentBet:{player_to_act.current_bet}    Pot:{self.pots[0]}  allin?:{player_to_act.all_in}   Pos:{player_to_act.position}   {player_to_act}')
+                # print(f'p:{p} start:{start}  m:{m}  i:{self.players_in_hand.index(player_to_act)}  {player_action} bet:{bet}   highestBet:{self.highest_bet}   playerCurrentBet:{player_to_act.current_bet}    Pot:{self.pots[0]}  allin?:{player_to_act.all_in}   Pos:{player_to_act.position}   {player_to_act}')
                 p += 1
             elif player_action in ('RAISE', 'BET'):
                 self.raise_amt = player_to_act.current_bet - self.highest_bet
                 self.highest_bet = player_to_act.current_bet
                 if player_action == 'RAISE':
                     self.n_raises[self.game_state] += 1
-                #print(f'p:{p} start:{start}  m:{m}  i:{self.players_in_hand.index(player_to_act)}  {player_action} bet:{bet}   highestBet:{self.highest_bet}   playerCurrentBet:{player_to_act.current_bet}    Pot:{self.pots[0]}  allin?:{player_to_act.all_in}   Pos:{player_to_act.position}   {player_to_act}')
+                # print(f'p:{p} start:{start}  m:{m}  i:{self.players_in_hand.index(player_to_act)}  {player_action} bet:{bet}   highestBet:{self.highest_bet}   playerCurrentBet:{player_to_act.current_bet}    Pot:{self.pots[0]}  allin?:{player_to_act.all_in}   Pos:{player_to_act.position}   {player_to_act}')
                 start = start + p
                 p = 0
                 p += 1
@@ -1203,7 +1221,7 @@ class Hand:
                     start = start + p
                     p = 0
                 self.highest_bet = max(self.highest_bet, player_to_act.current_bet)
-                #print(f'p:{p} start:{start}  m:{m}  i:{self.players_in_hand.index(player_to_act)}  {player_action} bet:{bet}   highestBet:{self.highest_bet}   playerCurrentBet:{player_to_act.current_bet}    Pot:{self.pots[0]}  allin?:{player_to_act.all_in}   Pos:{player_to_act.position}   {player_to_act}')
+                # print(f'p:{p} start:{start}  m:{m}  i:{self.players_in_hand.index(player_to_act)}  {player_action} bet:{bet}   highestBet:{self.highest_bet}   playerCurrentBet:{player_to_act.current_bet}    Pot:{self.pots[0]}  allin?:{player_to_act.all_in}   Pos:{player_to_act.position}   {player_to_act}')
                 p += 1
 
         # check if any bets
@@ -1240,7 +1258,8 @@ class Hand:
             if len(live_players) == 1:
                 live_players[0].stack += live_players[0].current_bet - second_highest_bet
                 bets_value -= live_players[0].current_bet - second_highest_bet
-                print(f"Returned bet of {live_players[0].current_bet - second_highest_bet} for player: {live_players[0]}")
+                print(
+                    f"Returned bet of {live_players[0].current_bet - second_highest_bet} for player: {live_players[0]}")
             self.pots[index].pot += bets_value
             print(self.pots[index])
 
@@ -1298,7 +1317,7 @@ class Hand:
             print(f"{pot} winning hand: {winning_hand}")
 
             if len(winning_players) > 1:
-                print(f"{pot} is split between {len(winning_players)} players: ",end="")
+                print(f"{pot} is split between {len(winning_players)} players: ", end="")
                 pot_share, remaining_chips = divmod(pot.pot, len(winning_players))
                 for i, wp in enumerate(winning_players):
                     if i < (len(winning_players) - 1):
@@ -1314,7 +1333,8 @@ class Hand:
                             print(f"Uneven Split: {wp.name} awarded {remaining_chips} remaining chips")
             else:
                 winning_players[0].stack += pot.pot
-                print(f"{pot} is awarded to {winning_players[0]}, with hand: {winning_players[0].show_hand(self.community_board)}")
+                print(
+                    f"{pot} is awarded to {winning_players[0]}, with hand: {winning_players[0].show_hand(self.community_board)}")
 
     def preflop(self):
         self.betting_round(self.players_in_hand)
@@ -1329,7 +1349,7 @@ class Hand:
             print(" PREFLOP; No community cards dealt yet\n-----------------------------")
         else:
             for c in self.community_board:
-                print(f"   {c}",end="")
+                print(f"   {c}", end="")
             print("\n-----------------------------")
 
     def flop(self):
@@ -1398,28 +1418,22 @@ class Hand:
         return f"Hand {self.hand_number}"
 
 
-
-
-
 player_list = [
-    ('Young White TAG',500, 'calling station')
-    ,('ME',500, 'calling station')
-    ,('Young Asian LAG',800, 'calling station')
-    ,('Young Asian TAG',100, 'aggro')
-    ,('Old Asian Laggy',500, 'calling station')
-    ,('Fat Old White Guy',1000, 'passive')
-    ,('White Pro',500, 'passive')
-    ,('Indian LAG',1000, 'calling station')
-    ,('Villain LAG',137, 'aggro')
+    ('Young White TAG', 500, 'calling station')
+    , ('ME', 500, 'calling station')
+    , ('Young Asian LAG', 800, 'calling station')
+    , ('Young Asian TAG', 100, 'aggro')
+    , ('Old Asian Laggy', 500, 'calling station')
+    , ('Fat Old White Guy', 1000, 'passive')
+    , ('White Pro', 500, 'passive')
+    , ('Indian LAG', 1000, 'calling station')
+    , ('Villain LAG', 137, 'aggro')
 ]
-
 
 t1 = Table()
 seat_players(player_list, t1)
 
-
 h1 = Hand(t1)
-
 
 h2 = Hand(t1)
 h3 = Hand(t1)
@@ -1451,14 +1465,12 @@ t1.seats[7].resume_play(t1)
 h19 = Hand(t1)
 h20 = Hand(t1)
 
-
-
 print(Table.__dict__)
 print(t1.__dict__)
 print(t1)
 print(Player.__dict__)
 print(Hand.__dict__)
-#print(h1.__dict__)
+# print(h1.__dict__)
 print(f'Hand 1: {h1.__dict__}')
 # print(f'Hand 2: {h2.__dict__}')
 # print(f'Hand 3: {h3.__dict__}')
@@ -1508,7 +1520,6 @@ print(h1.n_raises)
 print(h1.community_board)
 h1.show_board()
 
-
 print(Card.__dict__)
 
 print(h1.deck)
@@ -1520,7 +1531,6 @@ print(t1)
 # print(h3.positionsInt[1].player)
 # print(h3.positionsInt[1].starting_stack)
 # print(h3.positionsInt[1].player.stack)
-
 
 
 # print(h6.positions['BB'].__dict__)
