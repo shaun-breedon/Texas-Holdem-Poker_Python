@@ -1,3 +1,5 @@
+from collections import deque
+
 seats = [1,2,3,4,5,6,7,8,9]
 n_seats = len(seats)
 
@@ -13,4 +15,13 @@ else:
     raise RuntimeError("Button cannot be the Big Blind")
 
 print(between_bu_and_sb_inclusive)
-print(seats[1:4])
+
+seats = seats[2:]
+print(seats)
+
+order = deque(seats)
+
+test_ = {'as', 'sfd', 'sae', 'bgn', 'jyf'}
+
+axf = test_ - {'as'}
+print(axf)
