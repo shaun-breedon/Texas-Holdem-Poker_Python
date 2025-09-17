@@ -1,0 +1,6 @@
+include README.md
+include LICENSE
+include CHANGELOG.md
+recursive-include src/holdem *.md *.txt *.rst *.json *.yaml *.yml *.ini *.cfg
+recursive-include src/holdem *.png *.jpg *.jpeg *.svg *.ico
+global-exclude __pycache__ *.py[cod] *.so

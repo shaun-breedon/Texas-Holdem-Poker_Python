@@ -989,9 +989,7 @@ class Hand:
 
         # Begin hand
         self.run_hand()
-
         self.end_hand_reset()
-        print(f"\n\n   END of HAND {self.hand_number}   \n\n")
 
     def _next_pot_number(self) -> int:
         n = self._num_of_pots
@@ -1368,6 +1366,7 @@ class Hand:
         self.table.headsup = False
         self.end_hand = True
         Hand.num_of_hands += 1
+        print(f"\n\n   END of HAND {self.hand_number}   \n\n")
 
     def __repr__(self):
         return "Hand()"

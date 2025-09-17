@@ -1,0 +1,79 @@
+[build-system]
+requires = ["setuptools>=69", "wheel", "setuptools_scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "holdem"
+dynamic = ["version"]
+description = "Texas Holdem Game with LLM-driven AI players"
+readme = { file = "README.md", content-type = "text/markdown" }
+requires-python = ">=3.11"
+license = { file = "LICENSE" }
+authors = [{ name = "Shaun Breedon" }]
+dependencies = [
+  "uuid6"         # until stdlib has uuidv7 with Python 3.14
+]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.11",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Typing :: Typed"
+]
+
+[project.urls]
+"Repository" = "https://github.com/shaun-breedon/Texas-Holdem-Poker_Python"
+
+[project.optional-dependencies]
+dev = ["pytest>=7.4", "ruff", "black", "mypy"]
+
+[project.scripts]
+holdem_cli = "holdem.io.cli:main"
+holdem = "holdem.__main__:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+include-package-data = true
+
+[tool.setuptools_scm]
+version_scheme = "guess-next-dev"
+local_scheme = "no-local-version"
+write_to = "src/holdem/_version.py"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"holdem" = [
+  "data/**",
+  "templates/**",
+  "assets/**",
+  "schemas/**",
+
+  "**/*.md",
+  "**/*.rst",
+  "**/*.txt",
+  "**/*.json",
+  "**/*.yaml",
+  "**/*.yml",
+  "**/*.ini",
+  "**/*.cfg",
+
+  "**/*.png",
+  "**/*.jpg",
+  "**/*.jpeg",
+  "**/*.svg",
+  "**/*.ico",
+
+  "py.typed"
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.black]
+line-length = 100
