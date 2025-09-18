@@ -47,6 +47,7 @@ src/holdem/
 - engine/
   - game
   - betting
+  - allocate_pots
   - showdown
 - strategies/
   - base
@@ -105,8 +106,9 @@ Run the main script:
 
 ## Changelog
 - **2025-04-02** — Project created  
--  **2025-08-25** — Base Game Complete (Hand completes with winning hand player awarded pot)
+- **2025-08-25** — Base Game Complete (Hand completes with winning hand player awarded pot)
 - **2025-09-18** — Major Code Refactor. Modularised the code.
+- **2025-09-19** — Bugfixes and made `allocate_pots` module by moving the code out of `betting`
 
 ---
 

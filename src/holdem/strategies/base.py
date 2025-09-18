@@ -1,8 +1,9 @@
 # src/holdem/strategies/base.py
 
 from __future__ import annotations
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Protocol, FrozenSet, runtime_checkable, TYPE_CHECKING
+from typing import FrozenSet, TYPE_CHECKING
 
 from ..core.enums import GameState, Position
 
@@ -29,6 +30,7 @@ class View:
     open_action: bool
     board: tuple[Card, ...]
     legal: FrozenSet[Action]
+    big_blind: int
 
     position: Position
     stack: int
@@ -55,7 +57,21 @@ class View:
                         and self.highest_bet - self.current_bet == 0
                         ) else False
 
-@runtime_checkable
-class Strategy(Protocol):
+class Strategy(ABC):
+    """
+    Abstract base class for strategies.
+    Concrete strategy classes will subclass this and implement decide().
+    """
+    @abstractmethod
     def decide(self, view: View) -> Decision: ...
 
+    @classmethod
+    def _bet(cls, amount: float, view: View) -> int:
+        return max(round(amount), view.big_blind)
+
+    @classmethod
+    def _raise_to(cls, amount: float, view: View) -> int:
+        return max(round(amount), view.min_raise_to)
+
+    def __repr__(self):
+        return f"Strategy()"

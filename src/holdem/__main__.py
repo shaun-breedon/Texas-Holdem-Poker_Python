@@ -43,7 +43,7 @@ player_list: list[PlayerSpec] = [('Young TAG', 700, Tag()),
                                  ]
 
 def main() -> int:
-    hands = run_game(n_times=5, pl_list=player_list)
+    hands = run_game(n_times=20, pl_list=player_list)
     print(f"\nDealt {len(hands)} hands.")
     return 0
 

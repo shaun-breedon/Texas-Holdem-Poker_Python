@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 The format is based on "Keep a Changelog" and follows [Semantic Versioning](https://semver.org/).
 
+## [0.3.1] - 2025/09/19
+
+### Changed
+- Refactored `betting.py` by taking out the chips-to-pot logic to create a new module `allocate_pots.py` that sits inside `engine`
+- `simple.py` strategies (eg `Tag`) now inherit from `Strategy` class in `base.py`, and can use its class methods.
+
+### Fixed
+- Fixed game-breaking winning hand bug where winning hands couldn't be evaluated.
+- Other various bug fixes that resulted from the modular overhaul refactor from 0.3.0
+
+---
+
 ## [0.3.0] - 2025/09/18
 ### Added
 - Refactored file structure of `holdem` to conform to proper development practices

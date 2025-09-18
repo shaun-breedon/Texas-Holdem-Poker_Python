@@ -7,6 +7,8 @@ from .rng import RNG, default_rng
 from .errors import TableStateError, PotsStateError, EngineStateError
 
 __all__ = [
+    "RNG",
+    "default_rng",
     "TableStateError",
     "PotsStateError",
     "EngineStateError",

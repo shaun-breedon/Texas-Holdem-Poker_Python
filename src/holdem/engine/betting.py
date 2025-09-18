@@ -4,8 +4,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, FrozenSet
 from collections import deque # Betting round
 
-from ..core import Action, GameState
-from ..table.pots import Pot
+from ..core import Action, GameState, Position
 from ..strategies.base import View, Decision
 from ..strategies.features import evaluate_hand_features
 from ..utils.errors import EngineStateError
@@ -14,7 +13,7 @@ if TYPE_CHECKING:
     from ..table.player import Player
     from .game import Hand
 
-__all__ = ["run_betting_round"]
+__all__ = ["orchestrate_betting_round"]
 
 NO_BET: FrozenSet[Action]            = frozenset({Action.CHECK, Action.BET, Action.FOLD, Action.ALL_IN})
 FACING_BET_OPEN: FrozenSet[Action]   = frozenset({Action.CALL, Action.RAISE, Action.FOLD, Action.ALL_IN})
@@ -62,6 +61,7 @@ def _get_hand_betting_info(hand: Hand, pl: Player, to_call: int, open_action: bo
         open_action=open_action,
         board=tuple(hand.community_board),
         legal=frozenset(legal_actions),
+        big_blind= hand.big_blind_amt,
         position=pl.position,
         stack=pl.stack,
         current_bet=pl.current_bet,
@@ -111,7 +111,7 @@ def _bet_raise(pl: Player,
                pending: set[Player],
                legal_actions: set[Action]):
     if dec.action == Action.RAISE:
-        if to_call == 0:
+        if to_call == 0 and not (hand.game_state == GameState.PRE_FLOP and pl.position == Position.BIG_BLIND):
             raise EngineStateError("Cannot RAISE when no bet; use BET.")
         pl.raise_to(dec.amount)
         full_raise = (pl.current_bet - hand.highest_bet) >= hand.raise_amt
@@ -156,7 +156,7 @@ def _all_in(pl: Player,
     active.remove(pl)
     order.popleft()
 
-def _orchestrate_betting_round(hand: Hand, players_in_round: list[Player]):
+def orchestrate_betting_round(hand: Hand, players_in_round: list[Player]):
     start_idx = _get_starting_player(hand, players_in_round)
 
     order: deque[Player] = deque(players_in_round) # create a player queue from collections import
@@ -208,96 +208,3 @@ def _orchestrate_betting_round(hand: Hand, players_in_round: list[Player]):
         if pl_decision.action == Action.ALL_IN:
             _all_in(player_to_act, hand, order, active, pending, legal_actions)
             continue
-
-# ------------------------------ Pot Handling -------------------------------------------------------
-def _calculate_bets(hand: Hand, players: list[Player], index: int, previous: int=0, amt: int=0, looping: bool=False):
-    bets_value = 0
-    live_players = []
-    highest_bet = second_highest_bet = 0
-    pot = hand.pots[index]
-
-    def _pl_contribution(pl: Player) -> int:
-        return (min(pl.current_bet, amt) - previous) if looping else (pl.current_bet - previous)
-
-    for pl in players:
-        bets_value += _pl_contribution(pl)
-        if not pl.folded:
-            pot.eligible_players.add(pl)
-            live_players.append(pl)
-
-        # retrieve second highest bet
-        if pl.current_bet > highest_bet:
-            highest_bet, second_highest_bet = pl.current_bet, highest_bet
-        elif pl.current_bet > second_highest_bet:
-            second_highest_bet = pl.current_bet
-
-    if len(live_players) == 1:
-        lone_pl = live_players[0]
-        lone_pl.stack += lone_pl.current_bet - second_highest_bet       # return uncalled bet
-        bets_value -= lone_pl.current_bet - second_highest_bet
-        print(
-            f"Returned bet of {lone_pl.current_bet - second_highest_bet} for player: {lone_pl}")
-
-    pot.add(bets_value)
-    print(hand.pots[index])
-
-def _handle_side_pots(hand: Hand, players_in_round: list[Player], active_pot_index: int):
-    all_in_bets = set(p.current_bet for p in players_in_round if p.all_in)
-    max_bet, max_all_in_bet = max(p.current_bet for p in players_in_round), max(all_in_bets)
-    bets_occurred_after_all_in = max_bet > max_all_in_bet
-    levels = sorted(all_in_bets.union({max_bet}))
-    remaining: list[Player] = players_in_round
-    prev = 0
-
-    for i, amount in enumerate(levels):
-        is_last = (i == len(levels) - 1)
-
-        if is_last and bets_occurred_after_all_in:
-            print("bets occurred after final all-in")
-        _calculate_bets(hand, remaining, active_pot_index, prev, amount, True)
-
-        if is_last and not bets_occurred_after_all_in:
-            print("players remain who aren't all-in after calling all-in")
-            hand.pots[active_pot_index].capped = True
-
-        remaining = [p for p in remaining if (p.current_bet - amount) > 0]
-        prev = amount
-        if not is_last:
-            hand.pots[active_pot_index].capped = True
-        if len(remaining) > 1:
-            hand.pots.append(Pot(hand=hand))
-            active_pot_index += 1
-        elif len(remaining) == 1:
-            lone_pl = remaining[0]
-            lone_pl.stack += lone_pl.current_bet - prev
-            print(f"Returned bet of {lone_pl.current_bet - prev} for player: {lone_pl}")
-            break
-
-def _allocate_pots(hand: Hand, players_in_round: list[Player]):
-    active_pot_index = len(hand.pots) - 1
-    all_in_players = set(p.all_in for p in players_in_round)
-    if any(all_in_players):
-        _handle_side_pots(hand, players_in_round, active_pot_index)
-    else:
-        _calculate_bets(hand, players_in_round, active_pot_index)
-
-    while hand.pots and hand.pots[-1].amount == 0:
-        # Rethink deletion of pots, now tht you have ID's
-        hand.pots[-1].discard = True
-        hand.pots.pop()
-        # hand._num_of_pots -= 1
-# ------------------------------------ End Pot Handling ------------------------------------------------------------
-
-def run_betting_round(hand: Hand, players_in_round: list[Player]):
-    _orchestrate_betting_round(hand, players_in_round)
-
-    # check if any bets
-    if hand.highest_bet > 0:
-        _allocate_pots(hand, players_in_round)
-    hand.reset_for_next_street(players_in_round)
-
-    # if one player remaining, award pots and end hand
-    if sum(not pl.folded for pl in hand.players_in_hand) == 1:
-        winning_player = next(pl for pl in hand.players_in_hand if not pl.folded)
-        hand.award_pots_without_showdown(winning_player)
-        hand.end_hand = True

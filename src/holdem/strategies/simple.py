@@ -4,7 +4,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ..core.enums import Rank, GameState, HandRank, Action
-from .base import View, Decision
+from .base import Strategy, View, Decision
 
 if TYPE_CHECKING:
     from ..core.cards import Card
@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 
 __all__ = ["CallingStation", "Nit", "Tag", "Lag"]
 
-class CallingStation:
+class CallingStation(Strategy):
     __slots__ = ()
 
     @staticmethod
@@ -35,14 +35,17 @@ class CallingStation:
             if view.n_raises[GameState.PRE_FLOP] >= 4:
                 return Decision(Action.CALL) if good else Decision(Action.FOLD)
             if view.n_raises[GameState.PRE_FLOP] == 1 and good and Action.RAISE in view.legal:
-                return Decision(Action.RAISE, round(view.pot*3))
+                return Decision(Action.RAISE, self._raise_to(view.pot * 3, view))
             return Decision(Action.CALL)
 
         if Action.CHECK in view.legal:
             return Decision(Action.CHECK)
         return Decision(Action.CALL)
 
-class Nit:
+    def __repr__(self):
+        return f"CallingStation(Strategy)"
+
+class Nit(Strategy):
     __slots__ = ()
 
     @staticmethod
@@ -68,7 +71,10 @@ class Nit:
             return Decision(Action.CHECK)
         return Decision(Action.CALL) if good else Decision(Action.FOLD)
 
-class Tag:
+    def __repr__(self):
+        return f"Nit(Strategy)"
+
+class Tag(Strategy):
     __slots__ = ()
 
     @staticmethod
@@ -87,7 +93,7 @@ class Tag:
 
         if view.street == GameState.PRE_FLOP:
             if view.limp_fold_to_bb:
-                return Decision(Action.RAISE, round(view.pot * 3)) if good else Decision(Action.CHECK)
+                return Decision(Action.RAISE, self._raise_to(view.pot * 3, view)) if good else Decision(Action.CHECK)
             if not good:
                 return Decision(Action.FOLD)
             if not view.open_action:
@@ -95,18 +101,21 @@ class Tag:
             elif view.chips_to_min_raise > view.stack:
                 return Decision(Action.ALL_IN, view.stack)
             else:
-                return Decision(Action.RAISE, round(view.highest_bet * 5))
+                return Decision(Action.RAISE, self._raise_to(view.highest_bet * 5, view))
 
         if not view.open_action:
             return Decision(Action.CALL)
         if Action.BET in view.legal:
-            return Decision(Action.BET, round(view.pot * 0.666))
+            return Decision(Action.BET, self._bet(view.pot * 0.666, view))
         elif view.chips_to_min_raise > view.stack:
             return Decision(Action.ALL_IN, view.stack)
         else:
-            return Decision(Action.RAISE, view.pot)
+            return Decision(Action.RAISE, self._raise_to(view.pot, view))
 
-class Lag:
+    def __repr__(self):
+        return f"Tag(Strategy)"
+
+class Lag(Strategy):
     __slots__ = ()
 
     @staticmethod
@@ -133,13 +142,16 @@ class Lag:
             elif view.chips_to_min_raise > view.stack:
                 return Decision(Action.ALL_IN, view.stack)
             else:
-                return Decision(Action.RAISE, round(view.highest_bet * 5))
+                return Decision(Action.RAISE,  self._raise_to(view.highest_bet * 5, view))
 
         if not view.open_action:
             return Decision(Action.CALL)
         if Action.BET in view.legal:
-            return Decision(Action.BET, round(view.pot * 0.333))
+            return Decision(Action.BET, self._bet(view.pot * 0.333, view))
         elif view.chips_to_min_raise > view.stack:
             return Decision(Action.ALL_IN, view.stack)
         else:
-            return Decision(Action.RAISE, view.pot)
+            return Decision(Action.RAISE, self._raise_to(view.pot, view))
+
+    def __repr__(self):
+        return f"Lag(Strategy)"

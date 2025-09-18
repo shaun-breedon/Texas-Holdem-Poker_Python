@@ -11,7 +11,8 @@ from ..core.cards import Card, Deck
 from ..table.buttons_blinds import advance_buttons_post_blinds
 from ..table.peek import peek_buttons
 from ..table.pots import Pot
-from .betting import run_betting_round
+from .betting import orchestrate_betting_round
+from .allocate_pots import chips_to_pots
 from .showdown import showdown
 
 if TYPE_CHECKING:
@@ -169,16 +170,31 @@ class Hand:
         self.highest_bet = 0
         self.raise_amt = 0
 
+    def discard_empty_pots(self):
+        i = 0
+        while self.pots and self.pots[-1 - i].amount == 0:
+            self.pots[-1].discard = True
+            print(f"{self.pots[-1]} discarded")
+            if len(self.pots) == 1:
+                break
+            else:
+                i += 1
+
     def award_pots_without_showdown(self, winner):
+        self.discard_empty_pots()
         for pot in self.pots:
-            if pot.amount == 0:
-                print(f"{pot} has no chips")
+            if pot.discard:
                 continue
             winner.stack += pot.amount
-            print(f"{pot} awarded to {winner}")
+            print(f"{pot} awarded to {winner} on the {self.game_state} without showdown")
 
     def betting_round(self, players_in_round: list[Player]):
-        run_betting_round(self, players_in_round)
+        orchestrate_betting_round(self, players_in_round)
+
+        # check if any bets
+        if self.highest_bet > 0:
+            chips_to_pots(self, players_in_round)
+        self.reset_for_next_street(players_in_round)
 
         # if one player remaining, award pots and end hand
         if sum(not pl.folded for pl in self.players_in_hand) == 1:
@@ -274,7 +290,7 @@ class Hand:
         self.deck.shuffle()
         self.deal_hole_cards()
 
-        self.table.print_table()  # Can remove later
+        print(self.table.print_table())  # Can remove later
 
         # Begin hand
         self.run_hand()

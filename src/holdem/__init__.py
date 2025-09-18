@@ -7,7 +7,7 @@ This package contains the classes and functions for Texas Hold'em Poker.
 Subpackages:
 - holdem.core        : enums, cards, evaluator
 - holdem.table       : table, player, pots, buttons_blinds, peek
-- holdem.engine      : game, betting, showdown
+- holdem.engine      : game, betting, allocate_pots, showdown
 - holdem.strategies  : base, features, simple
 
 - holdem.utils       : rng, errors
@@ -32,7 +32,7 @@ from .core import Suit, Rank, HandRank, GameState, Action, Position, Card, Deck,
 
 from .table import Table, TableID, Player, PlayerID, Pot, PotID, Buttons, advance_buttons_post_blinds, peek_buttons
 
-from .engine import Hand, run_betting_round, showdown
+from .engine import Hand, orchestrate_betting_round, chips_to_pots, showdown
 
 from .strategies import Decision, View, Strategy, Features, evaluate_hand_features, CallingStation, Nit, Tag, Lag
 
@@ -52,7 +52,7 @@ __all__ = [
     "Table", "TableID", "Player", "PlayerID", "Pot", "PotID",
     "Buttons", "advance_buttons_post_blinds", "peek_buttons",
     # engine
-    "Hand", "showdown", "run_betting_round",
+    "Hand", "showdown", "orchestrate_betting_round", "chips_to_pots",
     # strategies
     "Decision", "View", "Strategy", "Features", "evaluate_hand_features",
     "CallingStation", "Nit", "Tag", "Lag",

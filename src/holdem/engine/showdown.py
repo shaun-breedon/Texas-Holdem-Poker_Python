@@ -23,7 +23,7 @@ def _determine_winners(hand: Hand, pot: Pot) -> dict[Player, HandEval]:
     winners_info: dict[Player, HandEval] = {
         ep: gph
         for ep, gph in eligible_players.items()
-        if (gph.hand_rank, gph.tie_key) == winning_key
+        if gph == winning_key
     }
     print(f"{pot} winning key: {winning_key}")
     return winners_info
@@ -62,9 +62,8 @@ def _award_pot(hand: Hand, pot: Pot):
 
 def showdown(hand: Hand):
     hand.game_state = GameState.SHOWDOWN
+    hand.discard_empty_pots()
     for pot in hand.pots:
-        if pot.amount == 0:
-            pot.discard = True
-            print(f"{pot} has no chips")
+        if pot.discard:
             continue
         _award_pot(hand, pot)
