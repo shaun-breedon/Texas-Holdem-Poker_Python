@@ -1,15 +1,16 @@
 # src/holdem/engine/betting.py
 
 from __future__ import annotations
-from typing import TYPE_CHECKING, FrozenSet
+from typing import TYPE_CHECKING, FrozenSet, cast
 from collections import deque # Betting round
 
-from ..core import Action, GameState, Position
+from ..core.enums import Action, GameState, Position
 from ..strategies.base import View, Decision
 from ..strategies.features import evaluate_hand_features
 from ..utils.errors import EngineStateError
 
 if TYPE_CHECKING:
+    from ..core.cards import Card
     from ..table.player import Player
     from .game import Hand
 
@@ -47,7 +48,7 @@ def _get_hand_betting_info(hand: Hand, pl: Player, to_call: int, open_action: bo
     pl_hand = pl.get_player_hand(hand.community_board)
     hand_properties = evaluate_hand_features(
         street=hand.game_state,
-        hole_cards=tuple(pl.hole_cards),
+        hole_cards=cast(tuple[Card, Card], tuple(pl.hole_cards)),
         board=tuple(hand.community_board),
         hand_rank=pl_hand.hand_rank
     )
@@ -65,7 +66,7 @@ def _get_hand_betting_info(hand: Hand, pl: Player, to_call: int, open_action: bo
         position=pl.position,
         stack=pl.stack,
         current_bet=pl.current_bet,
-        hole_cards=tuple(pl.hole_cards),
+        hole_cards=cast(tuple[Card, Card], tuple(pl.hole_cards)),
         hand_rank=pl_hand.hand_rank,
         hand_cards=pl_hand.hand_cards,
         fx=hand_properties

@@ -144,7 +144,7 @@ def _determine_hand(_cards: Sequence[Card], _tally_groups: dict[int, list[Rank]]
     top5 = list(_cards[:5])
     return top5, (HandRank.HIGH_CARD, _get_ranks(top5))
 
-def evaluate_player_hand(pl_hole_cards: list[Card, Card], board: list[Card, ...] | None = None) -> HandEval:
+def evaluate_player_hand(pl_hole_cards: list[Card], board: list[Card] | None = None) -> HandEval:
     """Return best 5-card hand (or 2-card if pre-flop), and HandRanking, using the two hole cards and the board"""
     cards = sorted(pl_hole_cards + (board or []), reverse=True) # sorts cards high->low. Logic relies on this
     hand, rank_and_key = _determine_hand(cards, _tally_rank_groupings(cards))

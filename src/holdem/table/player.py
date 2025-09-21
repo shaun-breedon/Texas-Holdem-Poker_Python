@@ -57,7 +57,7 @@ class Player:
     # hand state vars
     position: Position | None = None
     current_bet: int = 0
-    hole_cards: list[Card, Card] = field(default_factory=list)
+    hole_cards: list[Card] = field(default_factory=list)
     folded: bool = False
     all_in: bool = False
 
@@ -184,7 +184,7 @@ class Player:
         object.__setattr__(self,name, value)
 
     def __repr__(self):
-        return f"Player(name='{self.name}', stack={self.stack}, strategy='{self.strategy}') id={self.player_id}"
+        return f"Player(name='{self.name}', stack={self.stack}, strategy={self.strategy}) id={self.player_id}"
 
     def __str__(self):
         return f"{self.name}, stack: {self.stack}, {self.strategy}"

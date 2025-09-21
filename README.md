@@ -16,8 +16,8 @@ A Python implementation of Texas Hold'em Poker.
 
 - **Cards & Evaluator**: `Card`, `Deck`, and a 5-card hand evaluator (High Card → Royal Flush).
 - **Table Model**: players, seats, pots, blinds, buttons, antes.
-- **Engine**: runs full hands (preflop → showdown) with betting orchestration, handling side pots and awarding winners.
-- **Strategies**: simple archetypes (TAG, LAG, Nit, Calling Station) + a base interface
+- **Engine**: runs full hands (preflop; flop; turn; river; showdown) with betting orchestration, handling side pots and awarding winners.
+- **Strategies**: simple archetypes (`TAG`, `LAG`, `Nit`, `Calling Station`) + a base interface
 - **RNG**: project-wide RNG with seeding for reproducible shuffles.
 - **CLI**: run quick simulations from the terminal.
 
@@ -33,32 +33,32 @@ A Python implementation of Texas Hold'em Poker.
 ---
 
 ## Module Structure
-src/holdem/
-- core/
-  - cards.py
-  - enums
-  - evaluator
-- table/
-  - table
-  - player
-  - pots
-  - buttons_blinds
-  - peek
-- engine/
-  - game
-  - betting
-  - allocate_pots
-  - showdown
-- strategies/
-  - base
-  - features
-  - simple
-- utils/
-  - rng
-  - errors
-- io/
-  - cli
-  - hh_writer
+`src/holdem/`
+- `core/`
+  - `cards.py`
+  - `enums`
+  - `evaluator`
+- `table/`
+  - `table`
+  - `player`
+  - `pots`
+  - `buttons_blinds`
+  - `peek`
+- `engine/`
+  - `game`
+  - `betting`
+  - `allocate_pots`
+  - `showdown`
+- `strategies/`
+  - `base`
+  - `features`
+  - `simple`
+- `utils/`
+  - `rng`
+  - `errors`
+- `io/`
+  - `cli`
+  - `hh_writer`
 
 ---
 
@@ -70,7 +70,7 @@ src/holdem/
 
 ## Installation
 Clone the repository:
-```bash
+```
 git clone https://github.com/shaun-breedon/Texas-Holdem-Poker_Python.git
 cd Texas-Holdem-Poker_Python
 
@@ -109,6 +109,7 @@ Run the main script:
 - **2025-08-25** — Base Game Complete (Hand completes with winning hand player awarded pot)
 - **2025-09-18** — Major Code Refactor. Modularised the code.
 - **2025-09-19** — Bugfixes and made `allocate_pots` module by moving the code out of `betting`
+- **2025-09-21** — Minor Bugfixes
 
 ---
 

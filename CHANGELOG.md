@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on "Keep a Changelog" and follows [Semantic Versioning](https://semver.org/).
 
+## [0.3.2] - 2025/09/12
+
+### Fixed
+- Minor bug-fixes: Type-set error for hole_crds, repr issues for Table and Player
+
+---
+
 ## [0.3.1] - 2025/09/19
 
 ### Changed

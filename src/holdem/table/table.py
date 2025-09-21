@@ -118,6 +118,8 @@ class Table:
                 return "br"
             elif pl.owes_bb or pl.owes_sb:
                 return "ob"
+            elif not pl.position.label:
+                return "--"
             return f"{pl.position.label[-2:]}"
 
         lines = [
@@ -146,7 +148,8 @@ class Table:
         object.__setattr__(self,name, value)
 
     def __repr__(self):
-        return f"Table(num_of_seats={self.num_of_seats}, small_blind_amt={self.small_blind_amt}, big_blind_amt={self.big_blind_button})"
+        return (f"Table(seats={self.num_of_seats}, SB={self.small_blind_amt}, \
+        BB={self.big_blind_amt}, button={self.buttons.dealer_button})")
 
     def __str__(self):
         seated_occupants = ", ".join(
