@@ -3,8 +3,7 @@
 from __future__ import annotations
 from typing import ClassVar, NewType, TYPE_CHECKING
 from bisect import bisect_right # next_left_player_index
-from uuid import UUID
-from uuid6 import uuid7
+from uuid import UUID, uuid7 # type: ignore[attr-defined]
 
 from ..core.enums import GameState, Position
 from ..core.cards import Card, Deck
@@ -202,9 +201,48 @@ class Hand:
             self.award_pots_without_showdown(winning_player)
             self.end_hand = True
 
+    def pre_flop_betting_round_check(self) -> bool:
+        """
+        Return True if a pre-flop betting round should occur.
+        This method is to handle edge cases where no betting round occurs pre-flop, due to the blinds putting player(s)
+        all-in. E.g. the small blind has 1 chip and posting the SB puts them all-in.
+        No betting round occurs if:
+         A) It is Heads-up and;
+         B) 1) the small blind is all-in, or
+            2) the big blind is all-in for an amount lower or equal to the small blind.
+        Or
+         C) It is multi-way but non-all-in players are < 2, and if 1 is non-all-in, their current bet is >= highest bet.
+        In these cases, no decision can be made. The all-ins is automatically called by the blinds. The board cards are
+        dealt and the hand goes to showdown, with the pot being what the blind all-ins were.
+        """
+        if self.headsup:
+            bb = self.positions[Position.BIG_BLIND]
+            sb = self.positions[Position.BUTTON]
+
+            if sb.all_in:
+                return False
+            elif bb.all_in and bb.current_bet <= sb.current_bet:
+                return False
+            else:
+                return True
+
+        non_all_in = [pl for pl in self.players_in_hand if not pl.all_in]
+        if len(non_all_in) == 0:
+            return False
+        elif len(non_all_in) == 1:
+            active_pl = non_all_in[0]
+            return active_pl.current_bet < self.highest_bet
+        else:
+            return True
+
     def pre_flop(self):
         self.game_state = GameState.PRE_FLOP
-        self.betting_round(self.players_in_hand)
+        if self.pre_flop_betting_round_check():
+            self.betting_round(self.players_in_hand)
+        else:
+            chips_to_pots(self, self.players_in_hand)
+            self.reset_for_next_street(self.players_in_hand)
+            print(f"No Pre-Flop betting round, as posted blinds put players all-in")
 
     def deal_flop(self):
         self.burn_cards.extend(self.deck.draw())
@@ -283,7 +321,7 @@ class Hand:
         self.n_players_in_hand = len(self.players_in_hand)
         self.positions = self.assign_position()
 
-        self.highest_bet = self.big_blind_amt
+        self.highest_bet = max(pl.current_bet for pl in self.players_in_hand)
         self.raise_amt = self.big_blind_amt
         self.n_raises[GameState.PRE_FLOP] = 1
 

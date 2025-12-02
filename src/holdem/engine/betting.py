@@ -5,12 +5,12 @@ from typing import TYPE_CHECKING, FrozenSet, cast
 from collections import deque # Betting round
 
 from ..core.enums import Action, GameState, Position
+from ..core.cards import Card
 from ..strategies.base import View, Decision
 from ..strategies.features import evaluate_hand_features
 from ..utils.errors import EngineStateError
 
 if TYPE_CHECKING:
-    from ..core.cards import Card
     from ..table.player import Player
     from .game import Hand
 
@@ -43,6 +43,20 @@ def _apply_forced_folds(hand: Hand, order: deque[Player], active: set[Player], l
             order.remove(pl)
         except ValueError:
             pass
+
+def _check_pre_flop_blinds_all_in(pl: Player, hand: Hand, order: deque[Player], active: set[Player], pending: set[Player]) -> bool:
+    """
+    This function is to handle the edge cases where posting the blind puts a player all-in. Eg the small blind player
+    has only 1 chip. This is most likely to happen in tournaments with increasing blinds.
+    Then they need to be removed from the active and pending player lists.
+    """
+    if pl.all_in and hand.game_state == GameState.PRE_FLOP:
+        pending.discard(pl)
+        active.discard(pl)
+        order.popleft()
+        return True
+    else:
+        return False
 
 def _get_hand_betting_info(hand: Hand, pl: Player, to_call: int, open_action: bool, legal_actions: set[Action]) -> View:
     pl_hand = pl.get_player_hand(hand.community_board)
@@ -160,11 +174,11 @@ def _all_in(pl: Player,
 def orchestrate_betting_round(hand: Hand, players_in_round: list[Player]):
     start_idx = _get_starting_player(hand, players_in_round)
 
-    order: deque[Player] = deque(players_in_round) # create a player queue from collections import
-    order.rotate(-start_idx)        # rotate queue to start from starting player
-    active = set(players_in_round)  # not folded, not all-in
-    live = set(players_in_round)    # not folded
-    pending = set(players_in_round) # yet to act
+    order: deque[Player] = deque(players_in_round)                # create a player queue from collections import
+    order.rotate(-start_idx)                                      # rotate queue to start from starting player
+    live = set(players_in_round)                                  # not folded
+    active = set(pl for pl in players_in_round if not pl.all_in)  # not folded, not all-in
+    pending = set(active)                                         # yet to act
 
     legal_actions: set[Action] = set(FACING_BET_OPEN) if hand.game_state == GameState.PRE_FLOP else set(NO_BET)
 
@@ -176,12 +190,20 @@ def orchestrate_betting_round(hand: Hand, players_in_round: list[Player]):
 
         player_to_act = order[0]
 
+        if _check_pre_flop_blinds_all_in(pl=player_to_act, hand=hand, order=order, active=active, pending=pending):
+            continue
+
         to_call: int = hand.highest_bet - player_to_act.current_bet
         if to_call < 0:
             msg = f"to_call < 0: highest_bet={hand.highest_bet}-{player_to_act}current_bet={player_to_act.current_bet}"
             raise EngineStateError(msg)
 
-        open_action: bool = to_call >= hand.raise_amt
+        small_blind_exception: bool = (hand.game_state == GameState.PRE_FLOP
+                                       and player_to_act.seat == hand.buttons.small_blind_button
+                                       and player_to_act.current_bet <= hand.small_blind_amt
+                                       and len(active) > 1)
+
+        open_action: bool = (to_call >= hand.raise_amt) or small_blind_exception
         if not open_action:
             legal_actions = set(FACING_BET_CLOSED)
 

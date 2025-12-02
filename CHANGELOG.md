@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 
 The format is based on "Keep a Changelog" and follows [Semantic Versioning](https://semver.org/).
 
+## [0.3.3] - 2025/12/03
+
+### Added
+- New features that were added but not released yet.
+
+### Changed
+- Moved to `Python 3.14`, to utilise native support for `uuid7`
+- Minor `README.md` edits
+- Minor edits/bugfixes to `rng`, `cards`, `evaluator`, `table`, `player`, `allocate_pots`
+
+### Fixed
+- Changed how highest_bet in `game` is defined during game setup with posting blinds. It now correctly handles cases where the highest bet is lower than the blind.
+- Fixed `game` and `betting` to correctly handle edge cases where posting blinds causes players to go all-in before a standard betting round can occur.
+- In `betting`, fixed what legal actions are available after evaluating *to_call* by adding a small blind exception.
+
+---
+
 ## [0.3.2] - 2025/09/12
 
 ### Fixed
@@ -31,7 +48,7 @@ The format is based on "Keep a Changelog" and follows [Semantic Versioning](http
   - The last version of the old monolithic script code was 0.2.7
 
 ### Changed
-Major Code Refactor. Refactored the old monolith code (which was a complete game engine) to be a modular codebase, split up into sensible packages and sub-packages. These are all contained in the new `holdem` package (under src). The modules and sub-modules are:
+Major Code Refactor. Refactored the old monolith code (which was a complete game engine) to be a modular codebase, split up into sensible packages and sub-packages. These are all contained in the new `holdem` package (under src). The modules and submodules are:
 - `core`
   - `enums.py` ----------------> contains all the enum classes: Suit, Rank, HandRank, GameState, Action, Position
   - `cards.py` ----------------> card and deck of cards

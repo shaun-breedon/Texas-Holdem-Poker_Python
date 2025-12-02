@@ -3,12 +3,12 @@
 
 from __future__ import annotations
 
-from .rng import RNG, default_rng
+from .rng import RNG, DEFAULT_RNG
 from .errors import TableStateError, PotsStateError, EngineStateError
 
 __all__ = [
     "RNG",
-    "default_rng",
+    "DEFAULT_RNG",
     "TableStateError",
     "PotsStateError",
     "EngineStateError",

@@ -12,7 +12,6 @@ if TYPE_CHECKING:
 
 __all__ = ["chips_to_pots"]
 
-
 def _return_uncalled_bet(lone_pl: Player, _second_highest_bet: int) -> int:
     uncalled_portion = lone_pl.current_bet - _second_highest_bet
     lone_pl.stack += uncalled_portion
@@ -58,7 +57,7 @@ def _handle_side_pots(hand: Hand, players_in_round: list[Player], active_pot_ind
     prev_level = 0
 
     for i, level in enumerate(levels):
-        is_last = (i == len(levels) - 1)
+        is_last: bool = (i == len(levels) - 1)
         pot: Pot = hand.pots[active_pot_index]
 
         if is_last and bets_occurred_after_all_in:

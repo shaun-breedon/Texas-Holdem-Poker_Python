@@ -4,7 +4,7 @@ from contextlib import contextmanager
 from random import Random
 from typing import List, Sequence, TypeVar
 
-__all__ = ["RNG", "default_rng"]
+__all__ = ["RNG", "DEFAULT_RNG"]
 
 T = TypeVar("T")
 
@@ -47,4 +47,4 @@ class RNG:
     def shuffle(self, x: List[T]) -> None:
         self._rand.shuffle(x)
 
-default_rng = RNG()
+DEFAULT_RNG = RNG()

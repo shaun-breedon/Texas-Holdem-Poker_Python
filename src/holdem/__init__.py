@@ -36,7 +36,7 @@ from .engine import Hand, orchestrate_betting_round, chips_to_pots, showdown
 
 from .strategies import Decision, View, Strategy, Features, evaluate_hand_features, CallingStation, Nit, Tag, Lag
 
-from .utils import RNG, default_rng, TableStateError, PotsStateError, EngineStateError
+from .utils import RNG, DEFAULT_RNG, TableStateError, PotsStateError, EngineStateError
 
 # from .io import main as cli_main, HHWriter as HandHistoryWriter  # optional convenience
 
@@ -57,7 +57,7 @@ __all__ = [
     "Decision", "View", "Strategy", "Features", "evaluate_hand_features",
     "CallingStation", "Nit", "Tag", "Lag",
     # utils
-    "RNG", "default_rng",
+    "RNG", "DEFAULT_RNG",
     "TableStateError", "PotsStateError", "EngineStateError"
     # io
     # "cli_main", "HandHistoryWriter"

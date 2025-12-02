@@ -7,16 +7,13 @@ name = "holdem"
 dynamic = ["version"]
 description = "Texas Holdem Game with LLM-driven AI players"
 readme = { file = "README.md", content-type = "text/markdown" }
-requires-python = ">=3.11"
+requires-python = ">=3.14"
 license = { file = "LICENSE" }
 authors = [{ name = "Shaun Breedon" }]
-dependencies = [
-  "uuid6"         # until stdlib has uuidv7 with Python 3.14
-]
 classifiers = [
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.14",
   "License :: OSI Approved :: MIT License",
   "Operating System :: OS Independent",
   "Typing :: Typed"

@@ -1,10 +1,9 @@
-# src/holdem/engine/table.py
+# src/holdem/table/table.py
 
 from __future__ import annotations
 from collections import deque # Table waitlist
 from typing import TYPE_CHECKING, ClassVar, NewType
-from uuid import UUID
-from uuid6 import uuid7
+from uuid import UUID, uuid7 # type: ignore[attr-defined]
 
 from ..utils.errors import TableStateError
 
@@ -78,7 +77,6 @@ class Table:
         if pl is not None:
             pl.seat = None
             pl.table = None
-        self.seats[seat_number] = None
 
         if Table.wait_list and not session_end:
             next_player = Table.wait_list.popleft()
@@ -87,7 +85,7 @@ class Table:
     # Add change seat method
 
     def present(self, seat: int) -> bool:
-        pl = self.seats.get(seat)
+        pl = self.seats[seat]
         return bool(pl and not pl.on_break)
 
     def eligible(self, seat: int) -> bool:
@@ -103,7 +101,6 @@ class Table:
                 pl.table = None
             self.seats[s] = None
         self.buttons = None
-        self.headsup = False
         return end_session_players
 
     def print_table(self) -> str:
@@ -118,7 +115,7 @@ class Table:
                 return "br"
             elif pl.owes_bb or pl.owes_sb:
                 return "ob"
-            elif not pl.position.label:
+            elif not pl.position.label:  # old code, should delete
                 return "--"
             return f"{pl.position.label[-2:]}"
 

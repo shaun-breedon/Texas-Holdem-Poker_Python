@@ -3,8 +3,7 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import ClassVar, NewType, TYPE_CHECKING
-from uuid import UUID
-from uuid6 import uuid7
+from uuid import UUID, uuid7 # type: ignore[attr-defined]
 
 from ..core.enums import Action, Position
 from ..core.evaluator import evaluate_player_hand
@@ -39,10 +38,10 @@ class Player:
     # --- ID ---
     player_id: PlayerID = field(default_factory=_new_player_id)
 
-    # --- optional input var ---
+    # --- Optional Input Var ---
     waiting_for_big_blind: bool = False
 
-    # --- runtime ---
+    # --- Runtime ---
     table: Table | None = None
     seat: int | None = None
 
@@ -116,7 +115,7 @@ class Player:
         return evaluate_player_hand(self.hole_cards, board)
 
     def show_hand(self, board: list[Card] = None) -> str:
-        hand= self.get_player_hand(board)
+        hand = self.get_player_hand(board)
         hand_string = f"{hand.hand_rank}: "
         for c in hand.hand_cards:
             hand_string += f"{c} "

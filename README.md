@@ -35,8 +35,8 @@ A Python implementation of Texas Hold'em Poker.
 ## Module Structure
 `src/holdem/`
 - `core/`
-  - `cards.py`
   - `enums`
+  - `cards`
   - `evaluator`
 - `table/`
   - `table`
@@ -63,7 +63,7 @@ A Python implementation of Texas Hold'em Poker.
 ---
 
 ## Requirements
-- Python **3.11+**
+- Python **3.14**
 - OS: Linux/macOS/Windows
 
 ---
@@ -110,6 +110,7 @@ Run the main script:
 - **2025-09-18** — Major Code Refactor. Modularised the code.
 - **2025-09-19** — Bugfixes and made `allocate_pots` module by moving the code out of `betting`
 - **2025-09-21** — Minor Bugfixes
+- **2025-12-03** — Medium uplift, moved to Python 3.14 for uuid7, changed code to accomadate some preflop edge cases, and other minor fixes
 
 ---
 

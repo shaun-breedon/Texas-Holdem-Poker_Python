@@ -6,12 +6,12 @@ from typing import ClassVar # Suit
 from functools import total_ordering # Card
 
 from .enums import Suit, Rank
-from ..utils.rng import RNG, default_rng
+from ..utils.rng import RNG, DEFAULT_RNG
 
 __all__ = ["Card", "Deck"]
 
-@total_ordering
-@dataclass(frozen=True, slots=True)
+@total_ordering                      # completes all comparisons besides __lt__ and __eq__
+@dataclass(frozen=True, slots=True)  # immutable and memory compact. Auto-generates an __eq__ for total_ordering
 class Card:
     rank: Rank
     suit: Suit
@@ -32,7 +32,7 @@ class Card:
     def __lt__(self, other: object):
         """ (rank, suit) < (other.rank, other.suit)
         Uses a deterministic suit_sort dict to sort by suit when rank is equal.
-        Doesn't affect poker hand evaluation. """
+        Doesn't affect poker hand evaluation. (Suits don't outrank each other in poker) """
 
         if not isinstance(other, Card):
             return NotImplemented
@@ -52,19 +52,19 @@ class Deck:
         if shuffle_on_reset:
             self.shuffle()
 
-    def shuffle(self, *, seed: int | None = None, prng: RNG | None = None):
+    def shuffle(self, *, seed: int | None = None, prng: RNG | None = None) -> None:
         """
                 Shuffle the deck in place.
 
                 Args:
                     seed: if provided, shuffle deterministically for this call only.
-                    prng: optional RNG instance; defaults to the project-wide rng.default_rng.
+                    prng: optional RNG instance; defaults to the project-wide rng.DEFAULT_RNG.
                 """
-        _rng = prng or default_rng
+        _rng = prng or DEFAULT_RNG
         if seed is None:
             _rng.shuffle(self.cards)
         else:
-            # temporary deterministic shuffle without polluting global state
+            # temporary deterministic shuffle without altering global state
             with _rng.temp_seed(seed):
                 _rng.shuffle(self.cards)
 

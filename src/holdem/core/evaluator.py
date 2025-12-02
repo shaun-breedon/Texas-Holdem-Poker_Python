@@ -66,19 +66,17 @@ def _find_quads(_cards: Sequence[Card], _tally_groups: dict[int, list[Rank]]) ->
     return quad_cards
 
 def _find_full_house(_cards: Sequence[Card], _tally_groups: dict[int, list[Rank]]) -> list[Card] | None:
-    if not _tally_groups.get(3):  # if not trips
+    if not _tally_groups.get(3):          # if not trips
         return None
-
-    pair_candidates: list[Rank] = []
-    if len(_tally_groups.get(3)) >= 2:
-        pair_candidates.append(_tally_groups[3][1])
-    if _tally_groups.get(2):
-        pair_candidates.append(_tally_groups[2][0])
-    if not pair_candidates:
-        return None
-
     trips_rank = _tally_groups[3][0]
-    full_of_rank = max(pair_candidates)
+
+    if len(_tally_groups.get(3)) >= 2:    # handles the two trips cases, eg: AsAcAdKhKdKc9c
+        full_of_rank = _tally_groups[3][1]
+    else:
+        if not _tally_groups.get(2):      # if no pair
+            return None
+        full_of_rank = _tally_groups[2][0]
+
     trips = [c for c in _cards if c.rank == trips_rank]
     full_of = [c for c in _cards if c.rank == full_of_rank][:2]
     full_house_cards = trips + full_of
@@ -93,7 +91,7 @@ def _find_trips(_cards: Sequence[Card], _tally_groups: dict[int, list[Rank]]) ->
     return trips_cards
 
 def _find_two_pair(_cards: Sequence[Card], _tally_groups: dict[int, list[Rank]]) -> list[Card] | None:
-    if len(_tally_groups.get(2)) < 2:  # if not pair
+    if len(_tally_groups.get(2)) < 2:  # if not at least two pairs
         return None
     first_pair_rank, second_pair_rank = _tally_groups[2][0], _tally_groups[2][1]
     first_pair, second_pair = ([c for c in _cards if c.rank == first_pair_rank],
