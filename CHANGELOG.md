@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 The format is based on "Keep a Changelog" and follows [Semantic Versioning](https://semver.org/).
 
+
+## [Unreleased]
+### Added
+- xxx
+
+### Changed
+- Streamlined how the pre-flop blinds all-in checks and handling works in `betting`.
+
+### Fixed
+- xxx
+
+---
+
 ## [0.3.3] - 2025/12/03
 
 ### Added

@@ -44,20 +44,6 @@ def _apply_forced_folds(hand: Hand, order: deque[Player], active: set[Player], l
         except ValueError:
             pass
 
-def _check_pre_flop_blinds_all_in(pl: Player, hand: Hand, order: deque[Player], active: set[Player], pending: set[Player]) -> bool:
-    """
-    This function is to handle the edge cases where posting the blind puts a player all-in. Eg the small blind player
-    has only 1 chip. This is most likely to happen in tournaments with increasing blinds.
-    Then they need to be removed from the active and pending player lists.
-    """
-    if pl.all_in and hand.game_state == GameState.PRE_FLOP:
-        pending.discard(pl)
-        active.discard(pl)
-        order.popleft()
-        return True
-    else:
-        return False
-
 def _get_hand_betting_info(hand: Hand, pl: Player, to_call: int, open_action: bool, legal_actions: set[Action]) -> View:
     pl_hand = pl.get_player_hand(hand.community_board)
     hand_properties = evaluate_hand_features(
@@ -176,9 +162,13 @@ def orchestrate_betting_round(hand: Hand, players_in_round: list[Player]):
 
     order: deque[Player] = deque(players_in_round)                # create a player queue from collections import
     order.rotate(-start_idx)                                      # rotate queue to start from starting player
+
     live = set(players_in_round)                                  # not folded
     active = set(pl for pl in players_in_round if not pl.all_in)  # not folded, not all-in
     pending = set(active)                                         # yet to act
+
+    if hand.game_state == GameState.PRE_FLOP:
+        order = deque(pl for pl in order if pl in active)         # excludes players put all-in by the blinds
 
     legal_actions: set[Action] = set(FACING_BET_OPEN) if hand.game_state == GameState.PRE_FLOP else set(NO_BET)
 
@@ -189,9 +179,6 @@ def orchestrate_betting_round(hand: Hand, players_in_round: list[Player]):
             break
 
         player_to_act = order[0]
-
-        if _check_pre_flop_blinds_all_in(pl=player_to_act, hand=hand, order=order, active=active, pending=pending):
-            continue
 
         to_call: int = hand.highest_bet - player_to_act.current_bet
         if to_call < 0:

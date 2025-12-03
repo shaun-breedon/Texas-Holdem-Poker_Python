@@ -201,7 +201,7 @@ class Hand:
             self.award_pots_without_showdown(winning_player)
             self.end_hand = True
 
-    def pre_flop_betting_round_check(self) -> bool:
+    def _pre_flop_betting_round_check(self) -> bool:
         """
         Return True if a pre-flop betting round should occur.
         This method is to handle edge cases where no betting round occurs pre-flop, due to the blinds putting player(s)
@@ -237,7 +237,7 @@ class Hand:
 
     def pre_flop(self):
         self.game_state = GameState.PRE_FLOP
-        if self.pre_flop_betting_round_check():
+        if self._pre_flop_betting_round_check():
             self.betting_round(self.players_in_hand)
         else:
             chips_to_pots(self, self.players_in_hand)
